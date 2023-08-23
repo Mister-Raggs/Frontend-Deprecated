@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from mongoengine.queryset.visitor import Q
 
 from apps.citadel.company_management.forms import AddUpdateCompanyForm
-from apps.models.company_model import CompanyModel, CompanyAddress, AddressCountry
+from apps.models.company_model import CompanyModel, CompanyAddress, AddressCountry, check_company_exists_by_full_name
 from apps.common import utils
 from apps.common.custom_exceptions import CitadelDBException, CitadelIDPWebException, CompanyNotFoundException
 
@@ -68,7 +68,7 @@ def prepare_companies_list_data(draw, search_value, start_index, page_length):
 
         # get the count of records also
         records_filtered = CompanyModel.objects(
-            Q(full_name__contains=search_value) | Q(short_name__contains=search_value)
+            Q(full_name__icontains=search_value) | Q(short_name__icontains=search_value)
         ).count()
     else:
         companies_data = CompanyModel.objects[start_index:end_index]
@@ -162,7 +162,7 @@ def save_company_details(form: AddUpdateCompanyForm) -> str:
 
 # TODO: add other form data validations here
 def validate_add_update_company_data(form: AddUpdateCompanyForm) -> str:
-    if CompanyModel.check_company_exists_by_full_name(form.full_name.data, form.row_id.data):
+    if check_company_exists_by_full_name(form.full_name.data, form.row_id.data):
         return "Company with same full name already exists"
     elif not utils.string_is_not_empty(form.short_name.data):
         return "Company short name is mandatory but seems empty."

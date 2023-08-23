@@ -40,7 +40,17 @@ class CompanyModel(BaseModel):
     is_active = me.BooleanField(required=True, default=True)
     is_deleted = me.BooleanField(required=True, default=False)
 
-    meta = {"db_alias": constants.MONGODB_CONN_ALIAS}
+    meta = {
+        "db_alias": constants.MONGODB_CONN_ALIAS,
+        "indexes": [
+            "full_name",
+            "short_name",
+            "address.address_city",
+            "address.address_state",
+            "address.address_country",
+            "address.address_zip",
+        ],
+    }
 
     def __repr__(self):
         return f"{self.full_name}"
@@ -58,13 +68,14 @@ class CompanyModel(BaseModel):
             + ")"
         )
 
-    def check_company_exists_by_full_name(full_name, row_id):
-        company = None
-        # if row_id is present its an update request
-        if utils.string_is_not_empty(row_id):
-            company = CompanyModel.objects(Q(full_name=full_name) & Q(id__ne=row_id)).first()
-        else:
-            # its an add new request
-            company = CompanyModel.objects(full_name=full_name).first()
 
-        return True if company else False
+def check_company_exists_by_full_name(full_name, row_id):
+    company = None
+    # if row_id is present its an update request
+    if utils.string_is_not_empty(row_id):
+        company = CompanyModel.objects(Q(full_name=full_name) & Q(id__ne=row_id)).first()
+    else:
+        # its an add new request
+        company = CompanyModel.objects(full_name=full_name).first()
+
+    return True if company else False

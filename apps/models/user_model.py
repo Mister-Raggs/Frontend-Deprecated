@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from apps import login_manager
 from apps.models.base_model import BaseModel
 from apps.models.company_model import CompanyModel
-from apps.common import constants
+from apps.common import constants, utils
 
 
 class UserSalutationTypes(str, Enum):
@@ -40,7 +40,16 @@ class UserModel(BaseModel, UserMixin):
     is_deleted = me.BooleanField(required=True, default=False)
     roles = me.ListField(me.EnumField(UserRole, default=UserRole.CLIENT_NORMAL), required=True)
 
-    meta = {"db_alias": constants.MONGODB_CONN_ALIAS}
+    meta = {
+        "db_alias": constants.MONGODB_CONN_ALIAS,
+        "indexes": [
+            "first_name",
+            "middle_name",
+            "last_name",
+            "email",
+            "#company",
+        ],
+    }
 
     def __repr__(self):
         return f"{self.email}"
@@ -80,7 +89,7 @@ def get_user_by_email(email) -> UserModel:
 def verify_user_password(provided_password, stored_password):
     """Verify a stored password against one provided by user"""
 
-    # TODO: has the password and avoid plain strings
+    # TODO: hash the password and avoid plain strings
 
     # stored_password = stored_password.decode('ascii')
     # salt = stored_password[:64]
@@ -92,3 +101,15 @@ def verify_user_password(provided_password, stored_password):
     # pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     # return pwdhash == stored_password
     return provided_password == stored_password
+
+
+def check_user_exists_by_email(email, row_id):
+    user = None
+    # if row_id is present its an update request
+    if utils.string_is_not_empty(row_id):
+        user = UserModel.objects(Q(email=email) & Q(id__ne=row_id)).first()
+    else:
+        # its an add new request
+        user = UserModel.objects(email=email).first()
+
+    return True if user else False

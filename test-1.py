@@ -1,4 +1,4 @@
-from apps.models.user_model import UserModel
+from apps.models.user_model import UserModel, UserSalutationTypes
 import mongoengine as me
 from mongoengine.queryset.visitor import Q
 from apps.models.company_model import CompanyModel, ContactNumber, ContactNumberType, CompanyAddress, AddressCountry
@@ -16,6 +16,8 @@ me.connect(host="mongodb://127.0.0.1:27017/citadel-idp-db-test-1", alias="citade
 # )
 
 # user.save()
+
+print(UserSalutationTypes.Mr.value)
 model = CompanyModel
 pk = "64d15c9fe9d9ba374672d19b"
 
@@ -25,8 +27,10 @@ pk = "64d15c9fe9d9ba374672d19b"
 # print("-------")
 # print(model._get_collection_name())
 # print("-------")
-data = model.objects(Q(full_name=pk) & Q(id__ne=pk)).first()
-print(data)
+data = model.objects()
+for company in CompanyModel.objects():
+    print(company.full_name + ", " + str(company.id))
+
 # data = model.objects().only("full_name")[10:20]
 # print(data)
 # data = model.objects().only("full_name")[20:30]

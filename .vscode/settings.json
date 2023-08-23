@@ -2,6 +2,7 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
+    "code-runner.runInTerminal": true,
     "python.formatting.provider": "black",
     "python.linting.pylintArgs": [
         "--load-plugins",

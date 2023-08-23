@@ -1,0 +1,236 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Add New User {% endblock %}
+
+<!-- Element injected in the BODY element -->
+{% block body_class %} sidebar-mini pace-primary {% endblock body_class %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<!-- Google Font: Source Sans Pro -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<!-- Select2 -->
+<link rel="stylesheet" href="/static/assets/plugins/select2/css/select2.min.css">
+<link rel="stylesheet" href="/static/assets/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css">
+<!-- Theme style -->
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Add New User Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">Citadel</a></li>
+            <li class="breadcrumb-item active">Add New User</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+
+        <!-- left column -->
+        <div class="col-md-9">
+          <!-- general form elements -->
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Please Enter the User's Details</h3>
+            </div>
+            <!-- /.card-header -->
+
+            <!-- form start -->
+            <form name="add-update-user-form" id="add-update-user-form" action="" method="post">
+
+              {{ form.hidden_tag() }}
+
+              <div class="card-body">
+
+                <!-- Errors displayed here -->
+                {% if msg %}
+                {% if msg_type == "error" %}
+                <div class="alert alert-danger alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                  <h5><i class="icon fas fa-info"></i> Error!</h5>
+                  {{ msg | safe }}
+                </div>
+                {% endif %}
+                {% endif %}
+
+                <!-- Success msg displayed here -->
+                {% with messages = get_flashed_messages(category_filter=["success"]) %}
+                {% if messages %}
+                <div class="alert alert-success alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                  <h5><i class="icon fas fa-check"></i> Success!</h5>
+                  {% for msg in messages %}
+                  {{ msg }}
+                  {% endfor %}
+                </div>
+                </ul>
+                {% endif %}
+                {% endwith %}
+
+                <div class="card card-secondary">
+                  <div class="card-header">
+                    <h3 class="card-title">User's Basic Details:</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-sm-3">
+                        <div class="form-group">
+                          {{ form.salutation(class="form-control") }}
+                        </div>
+                      </div>
+                      <div class="col-sm-9">
+                        <div class="form-group">
+                          {{ form.first_name(placeholder="First Name", class="form-control") }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          {{ form.middle_name(placeholder="Middle Name", class="form-control") }}
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          {{ form.last_name(placeholder="Last Name", class="form-control") }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          {{ form.email(placeholder="Email", class="form-control") }}
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          {{ form.company(class="form-control") }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+
+                <div class="card card-secondary">
+                  <!-- TODO: add a simple password strength checker -->
+                  <div class="card-header">
+                    <h3 class="card-title">Choose Password:</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          <div class="input-group" id="show_hide_password">
+                            {{ form.password(placeholder="Password", class="form-control") }}
+                            <div class="input-group-append">
+                              <span class="input-group-text">
+                                <a href="#"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          <div class="input-group" id="show_hide_confirm_password">
+                            {{ form.confirm_password(placeholder="Confirm Password", class="form-control") }}
+                            <div class="input-group-append">
+                              <span class="input-group-text">
+                                <a href="#"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+
+                <div class="card card-secondary">
+                  <!-- TODO: add a simple password strength checker -->
+                  <div class="card-header">
+                    <h3 class="card-title">User Type & Company:</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          {{ form.user_type(class="form-control") }}
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="form-group">
+                          {{ form.role(class="form-control") }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+                <div class="card-footer">
+                  <button type="submit" name="add-update-user-submit" id="add-update-user-submit"
+                    class="btn btn-primary">Submit</button>
+                  &nbsp; &nbsp;
+                  <button type="reset" id="reset-button" class="btn btn-primary">Reset</button>
+                </div>
+            </form>
+          </div>
+          <!-- /.card -->
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<!-- jQuery -->
+<script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<!-- jquery-validation -->
+<script src="/static/assets/plugins/jquery-validation/jquery.validate.min.js"></script>
+<script src="/static/assets/plugins/jquery-validation/additional-methods.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- pace-progress -->
+<script src="/static/assets/plugins/pace-progress/pace.min.js"></script>
+<!-- Select2 -->
+<script src="/static/assets/plugins/select2/js/select2.full.min.js"></script>
+<!-- AdminLTE App -->
+<script src="/static/assets/js/adminlte.min.js"></script>
+<!-- AdminLTE for demo purposes -->
+<!-- <script src="/static/assets/js/demo.js"></script> -->
+
+<script src="/static/assets/js/citadel/add_update_user.js"></script>
+
+
+{% endblock javascripts %}

@@ -31,15 +31,46 @@ def login():
         # Locate user
         user = get_user_by_email(email)
 
-        # Check the password
-        if user and verify_user_password(password, user.password):
-            login_user(user)
-            populate_login_session(user)
-            logging.info("Successfully logged in user email: %s", session.get("user_email"))
-            return redirect(url_for("authentication_blueprint.route_default"))
+        msg = ""
+        if user:
+            if user.is_active:
+                if not user.is_deleted:
+                    if user.company.is_active:
+                        if not user.company.is_deleted:
+                            # all is good from activation and deletion perspective...check passwords now
+                            if verify_user_password(password, user.password):
+                                login_user(user)
+                                populate_login_session(user)
+                                logging.info("Successfully logged in user email: %s", session.get("user_email"))
+                                return redirect(url_for("authentication_blueprint.route_default"))
+                            else:
+                                msg = "Wrong email or password."
+                                logging.error("User '%s' email and password don't match.", email)
+                        else:
+                            msg = "User's company is deactivated."
+                            logging.error(
+                                "User '%s' belongs to company '%s' which is soft deleted.",
+                                email,
+                                user.company.short_name,
+                            )
+                    else:
+                        msg = "User's company is deactivated."
+                        logging.error(
+                            "User '%s' belongs to company '%s' which is inactive.", email, user.company.short_name
+                        )
+                else:
+                    msg = "User account is deactivated."
+                    logging.error("User '%s' is soft deleted.", email)
+            else:
+                msg = "User account is deactivated."
+                logging.error("User '%s' is inactive.", email)
+        else:
+            msg = "Wrong email or password."
+            logging.error("User not found with email '%s'", email)
 
-        # Something (user or pass) is not ok
-        return render_template("accounts/login.html", msg="Wrong email or password", form=login_form)
+        # log all scenarios cases for auditing purposes but always send a
+        # single general msg back to browser
+        return render_template("accounts/login.html", msg=msg, form=login_form)
 
     if not current_user.is_authenticated:
         return render_template("accounts/login.html", form=login_form)
@@ -110,3 +141,4 @@ def populate_login_session(user_model: UserModel):
     session[constants.SESSION_USER_MIDDLE_NAME_KEY] = user_model.middle_name
     session[constants.SESSION_USER_LAST_NAME_KEY] = user_model.last_name
     session[constants.SESSION_USER_EMAIL_KEY] = user_model.email
+    session[constants.SESSION_USER_ROLE_KEY] = user_model.roles[0]

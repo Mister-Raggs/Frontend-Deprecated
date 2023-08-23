@@ -2,16 +2,17 @@
 All data objects declared here.
 """
 
-from apps.common import  config_reader, utils
+from apps.common import config_reader, utils
 from apps.common.custom_exceptions import CitadelIDPWebException
 from apps.common import config_reader
+
 
 class Metadata(object):
     """
     Metadata, represents metadata attributes for the blob.
-    
+
     """
-    
+
     status: str = None
     name: str = None
     url: str = None
@@ -22,9 +23,9 @@ class Metadata(object):
     content_md5: str = None
     content_length: int = None
     content_type: str = None
-    uploader_name :str="User_who_uploaded" #From Azure side
-    user_ip:str="IP of user" # From Azure side
-    
+    uploader_name: str = "User_who_uploaded"  # From Azure side
+    user_ip: str = "IP of user"  # From Azure side
+
     def __repr__(self):
         return (
             "\n"
@@ -51,7 +52,7 @@ class InputBlob(object):
 
     """
 
-    incoming_blob_path : str = None
+    incoming_blob_path: str = None
     failed_blob_path: str = None
     successful_blob_path: str = None
     blob_type: str = None

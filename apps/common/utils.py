@@ -1,13 +1,9 @@
 import logging
 from datetime import datetime
 import os
-from apps.common import config_reader,constants
-from apps.common.custom_exceptions import MissingDocumentTypeException,MissingConfigException
+from apps.common import config_reader, constants
+from apps.common.custom_exceptions import MissingDocumentTypeException, MissingConfigException
 import base64
-<<<<<<< Updated upstream
-from common.data_objects import Metadata
-from azure.storage.blob import BlobServiceClient
-=======
 from azure.storage.blob import BlobServiceClient
 from apps.models.input_blob_model import MetaData,ContentLength,ContentLengthUnit,InputBlob
 import mongoengine as me
@@ -33,7 +29,6 @@ user_role_dict = {
     "CLIENT_NORMAL": "CLIENT_NORMAL",  # Client normal user
 }
 
->>>>>>> Stashed changes
 countries_dict = {
     "-1": "Select a Country",
     "US": "United States",
@@ -118,6 +113,7 @@ ca_states_dict = {
     "YT": "Yukon",
 }
 
+
 def get_connection_string():
     """
     Removes " " from starting and end of the string.
@@ -158,7 +154,7 @@ def is_env_local():
         env = config_reader.config_data.get("Main", "env")
     else:
         env = "local"
-        
+
     return env.lower() == "local".lower()
 
 
@@ -218,7 +214,8 @@ def get_document_type_from_file_name(file_path):
         msg = f"Could not find form recognizer model for document type {document_type} inferred form file name path {file_path}."
         logging.error(msg)
         raise MissingDocumentTypeException(msg)
-    
+
+
 def blob_service_client():
     """
     blob_service_client calls BobServiceClient
@@ -227,6 +224,7 @@ def blob_service_client():
         BobServiceClient
     """
     return BlobServiceClient.from_connection_string(get_connection_string())
+
 
 def container_client():
     """
@@ -237,12 +235,8 @@ def container_client():
     """
     return blob_service_client().get_container_client(constants.DEFAULT_BLOB_CONTAINER)
 
-<<<<<<< Updated upstream
-def get_metadata(status: str, path: str):
-=======
 
 def get_mongodb_connection_string():
->>>>>>> Stashed changes
     """
     Removes " " from starting and end of the string.
 
@@ -282,30 +276,6 @@ def save_input_blob_to_mongodb(status: str, path: str):
     me.connect(host=mongodb_connection_string,alias="input_blob_to_mongodb")
     blob_client = container_client().get_blob_client(path)
     properties = blob_client.get_blob_properties()
-<<<<<<< Updated upstream
-
-    metadata = Metadata()
-    
-    metadata.status = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}-{status}]"
-    metadata.name = properties.name
-    metadata.content_md5 = base64.b64encode(properties.content_settings.content_md5).decode("utf-8")
-    metadata.url = blob_client.url
-    metadata.blob_type = properties.blob_type
-    metadata.container = container_client().container_name
-    metadata.content_length = properties.size
-    metadata.created = properties.creation_time.strftime("%Y-%m-%d %H:%M:%S")
-    metadata.last_modified = properties.last_modified.strftime("%Y-%m-%d %H:%M:%S")
-    metadata.content_type = properties.content_settings.content_type
-    return metadata
-
-
-
-
-
-
-
-
-=======
     
     try:
         content_md5 = base64.b64encode(properties.content_settings.content_md5).decode("utf-8")
@@ -338,4 +308,3 @@ def save_input_blob_to_mongodb(status: str, path: str):
     
     input_blob.save()
     me.disconnect(alias="input_blob_to_mongodb")
->>>>>>> Stashed changes

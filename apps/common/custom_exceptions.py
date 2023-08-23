@@ -27,6 +27,18 @@ class CompanyNotFoundException(CitadelIDPWebException):
     """
 
 
+class UserNotFoundException(CitadelIDPWebException):
+    """
+    Exception to be raised when document type cannot be inferred from file name.
+    """
+
+
+class UserSaveException(CitadelIDPWebException):
+    """
+    Exception to be raised when document type cannot be inferred from file name.
+    """
+
+
 class CitadelDBException(CitadelIDPWebException):
     """
     Exception to be raised for all DB related operations.

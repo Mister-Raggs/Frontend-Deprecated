@@ -1,10 +1,5 @@
 $(function () {
 
-    // Function to toggle the right sidebar
-    function toggleRightSidebar() {
-        $('body').toggleClass('control-sidebar-open');
-    }
-
     // util function to get row id from tr row
     function get_dt_row_id($button, $dataTable) {
         tr = $button.closest('tr');
@@ -20,7 +15,7 @@ $(function () {
     }
 
     // util function to get row id from tr row
-    function get_company_name($button, $dataTable) {
+    function get_user_full_name($button, $dataTable) {
         tr = $button.closest('tr');
         row = $dataTable.row(tr);
         data = row.data()
@@ -30,27 +25,27 @@ $(function () {
             row = $dataTable.row(tr);
             data = row.data()
         }
-        return data.short_name;
+        return data.full_name;
     }
 
     function handle_activate_delete_toggle_button_action($button, $dataTable, $action) {
         row_id = get_dt_row_id($button, $dataTable)
-        short_name = get_company_name($button, $dataTable)
+        full_name = get_user_full_name($button, $dataTable)
         console.log("Toggle action '" + $action + "', triggered for row id: " + row_id)
         if ($action == "")
             $action_name
-        $.post("/citadel/api/company_toggle_activate_delete",
+        $.post("/citadel/api/user_toggle_activate_delete",
             {
-                company_id: row_id,
+                row_id: row_id,
                 action: $action,
             }).done(function (result, status, xhr) {
                 $dataTable.ajax.reload(null, false)
                 console.log("Toggle action '" + $action + "', completed for row id: " + row_id + " and table updated.")
                 show_toast_notification("success", "Success!", "Toggle action '" + $action +
-                    "', completed for company '" + short_name + "'' and table updated.")
+                    "', completed for user '" + full_name + "'' and table updated.")
             }).fail(function (xhr, status, error) {
                 show_toast_notification("error", "Error!", "Toggle action '" + $action +
-                    "', failed for company '" + short_name + "''. <br />Error from server is: " + xhr.statusText)
+                    "', failed for user '" + full_name + "''. <br />Error from server is: " + xhr.statusText)
             });
     }
 
@@ -59,7 +54,7 @@ $(function () {
         if (toast_type == "success") {
             toast_class = "bg-success"
         } else if (toast_type == "error") {
-            toast_class = "bg-warning"
+            toast_class = "bg-danger"
         } else {
             toast_class = "bg-info"
         }
@@ -72,18 +67,19 @@ $(function () {
         })
     }
 
-    $dtable = $('#companies_list_table').DataTable({
+    $dtable = $('#users_list_table').DataTable({
         serverSide: true,
         processing: true,
         stateSave: true,
         'serverMethod': 'post',
         'ajax': {
-            'url': '/citadel/api/get_companies_data'
+            'url': '/citadel/api/get_users_data'
         },
         'columns': [
             { data: 'full_name', searchable: true },
-            { data: 'short_name', searchable: true },
-            { data: 'address_state_city_country_zip' },
+            { data: 'email', searchable: true },
+            { data: 'company_name', searchable: true },
+            { data: 'type_and_role' },
             { data: 'is_active' },
             { data: 'is_deleted' },
             {
@@ -93,7 +89,7 @@ $(function () {
                     $is_deleted = data.is_deleted
                     $button_group = '<div class="btn-group">' +
                         '       <button type="button" id="row-edit-button" class="btn btn-info btn-sm" ' +
-                        '               data-toggle="tooltip" title="Click to \'Edit\' this company.">' +
+                        '               data-toggle="tooltip" title="Click to \'Edit\' this user.">' +
                         '           <i class="fa fa-edit"></i>' +
                         '       </button>' +
                         '       &nbsp;&nbsp;'
@@ -101,11 +97,11 @@ $(function () {
                     // activate or deactive button
                     if ($is_active.toUpperCase() == "YES") {
                         $button_group += '       <button type="button" id="is-active-toggle-button" class="btn btn-warning btn-sm" ' +
-                            '                               data-toggle="tooltip" title="Click to \'De-Activate\' this company." >' +
+                            '                               data-toggle="tooltip" title="Click to \'De-Activate\' this user." >' +
                             '                       <i class="fas fa-toggle-on fa-lg"></i>'
                     } else {
                         $button_group += '       <button type="button" id="is-active-toggle-button" class="btn btn-warning btn-sm" ' +
-                            '                               data-toggle="tooltip" title="Click to \'Activate\' this company." >' +
+                            '                               data-toggle="tooltip" title="Click to \'Activate\' this user." >' +
                             '                       <i class="fas fa-toggle-off fa-lg"></i>'
                     }
                     $button_group += '      </button>'
@@ -113,11 +109,11 @@ $(function () {
                     // delete or undelete button
                     if ($is_deleted.toUpperCase() == "YES") {
                         $button_group += '       <button type="button" id="is-deleted-toggle-button" class="btn btn-danger btn-sm" ' +
-                            '                               data-toggle="tooltip" title="Click to \'Restore\' this company." >' +
+                            '                               data-toggle="tooltip" title="Click to \'Restore\' this user." >' +
                             '                       <i class="fas fa-trash-restore"></i>'
                     } else {
                         $button_group += '       <button type="button" id="is-deleted-toggle-button" class="btn btn-danger btn-sm" ' +
-                            '                               data-toggle="tooltip" title="Click to \'Soft Delete\' this company." >' +
+                            '                               data-toggle="tooltip" title="Click to \'Soft Delete\' this user." >' +
                             '                       <i class="fas fa-trash"></i>'
                     }
                     $button_group += '   </button>'
@@ -137,7 +133,7 @@ $(function () {
         'responsive': true,
         "drawCallback": function (settings) {
             //toggle tooltips for action buttons
-            $('#companies_list_table [data-toggle="tooltip"]').tooltip();
+            $('#users_list_table [data-toggle="tooltip"]').tooltip();
         },
     });
 
@@ -159,52 +155,24 @@ $(function () {
         });
 
     // handle the row edit button click
-    $('#companies_list_table tbody').on('click', 'button#row-edit-button', function () {
+    $('#users_list_table tbody').on('click', 'button#row-edit-button', function () {
         row_id = get_dt_row_id($(this), $dtable);
         console.log("row-edit-button, selected row id: " + row_id)
-        window.location.href = "/citadel/admin_add_update_company?row_id=" + row_id;
+        window.location.href = "/citadel/admin_add_update_user?row_id=" + row_id;
     });
 
     // handle the activate/deactivate button click
-    $('#companies_list_table tbody').on('click', 'button#is-active-toggle-button', function () {
+    $('#users_list_table tbody').on('click', 'button#is-active-toggle-button', function () {
         handle_activate_delete_toggle_button_action($(this), $dtable, "is_active",)
     });
 
     // handle the delete/restore button click
-    $('#companies_list_table tbody').on('click', 'button#is-deleted-toggle-button', function () {
+    $('#users_list_table tbody').on('click', 'button#is-deleted-toggle-button', function () {
         handle_activate_delete_toggle_button_action($(this), $dtable, "is_deleted")
     });
 
     // enable tooltips on action buttons
     $('[data-toggle="tooltip"]').tooltip();
-
-    $('.toastsDefaultAutohide').click(function () {
-        $(document).Toasts('create', {
-            title: 'Toast Title',
-            class: 'bg-success',
-            autohide: true,
-            delay: 1000,
-            body: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'
-        })
-    });
-
-    // Event handler for the right sidebar toggle button
-    $('#rightSidebarToggle').on('click', function (e) {
-        e.preventDefault();
-        toggleRightSidebar();
-    });
-
-    // Close the right sidebar when clicking outside of it
-    $(".content-wrapper").on('click', function (e) {
-        if (
-            $(e.target).closest('.control-sidebar').length === 0 &&
-            !$(e.target).is('#rightSidebarToggle')
-        ) {
-            if ($('body').hasClass('control-sidebar-open')) {
-                toggleRightSidebar();
-            }
-        }
-    });
 
     $('#clear_state').on('click', function (e) {
         $dtable.state.clear();
