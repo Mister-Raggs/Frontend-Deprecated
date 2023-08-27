@@ -5,8 +5,9 @@ from apps.common import config_reader, constants
 from apps.common.custom_exceptions import MissingDocumentTypeException, MissingConfigException
 import base64
 from azure.storage.blob import BlobServiceClient
-from apps.models.input_blob_model import MetaData,ContentLength,ContentLengthUnit,InputBlob
+from apps.models.input_blob_model import MetaData, ContentLength, ContentLengthUnit, InputBlob
 import mongoengine as me
+
 # dicts for forms
 user_salutations_dict = {
     "Mr.": "Mr.",
@@ -243,7 +244,7 @@ def get_mongodb_connection_string():
     Return:
         returns connection string
     """
-    
+
     if not config_reader.config_data.has_option("Main", "mongodb-connection-string"):
         raise MissingConfigException("Main.mongodb-connection-string.")
 
@@ -265,46 +266,46 @@ def save_input_blob_to_mongodb(status: str, path: str):
     Args:
         status (str): Blob status
         path (str): Path of blob
-        
+
     """
-    
-    
-    #"mongodb://127.0.0.1:27017/citadel-idp-db-test-1"
-    
-    mongodb_connection_string= get_mongodb_connection_string()
+
+    # "mongodb://127.0.0.1:27017/citadel-idp-db-test-1"
+
+    mongodb_connection_string = get_mongodb_connection_string()
     logging.info(mongodb_connection_string)
-    me.connect(host=mongodb_connection_string,alias="input_blob_to_mongodb")
+    me.connect(host=mongodb_connection_string, alias="input_blob_to_mongodb")
     blob_client = container_client().get_blob_client(path)
     properties = blob_client.get_blob_properties()
-    
+
     try:
         content_md5 = base64.b64encode(properties.content_settings.content_md5).decode("utf-8")
-    except Exception as msg:    
+    except Exception as msg:
         logging.error(msg)
-        content_md5="empty in system properties"
-        
-    formatted_status=f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}-{status}]"
-    meta_data=MetaData(
-        input_blob_status = formatted_status,
-        blob_type = properties.blob_type,
-        blob_container = container_client().container_name,
-        blob_last_modified = properties.last_modified.strftime("%Y-%m-%d %H:%M:%S"),
-        blob_created_on = properties.creation_time.strftime("%Y-%m-%d %H:%M:%S"),
-        content_md5 = content_md5,
-        content_length = ContentLength(size=properties.size,unit=ContentLengthUnit.unit),
-        content_type = properties.content_settings.content_type,
-        )
-    input_blob=InputBlob(
-        blob_name = os.path.basename(properties.name),
+        content_md5 = "empty in system properties"
+
+    formatted_status = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}-{status}]"
+    meta_data = MetaData(
+        input_blob_status=formatted_status,
+        blob_type=properties.blob_type,
+        blob_container=container_client().container_name,
+        blob_last_modified=properties.last_modified.strftime("%Y-%m-%d %H:%M:%S"),
+        blob_created_on=properties.creation_time.strftime("%Y-%m-%d %H:%M:%S"),
+        content_md5=content_md5,
+        content_length=ContentLength(size=properties.size, unit=ContentLengthUnit.unit),
+        content_type=properties.content_settings.content_type,
+    )
+    input_blob = InputBlob(
+        blob_name=os.path.basename(properties.name),
         incomming_blob_url=blob_client.url,
         incoming_blob_path=path,
-        failed_blob_path="failed_blob_path",   
-        failed_blob_url="http://127.0.0.1:10000/failed_blob_url",    #This feild is added during blob life cycle 
-        validation_successful_blob_path="validation_successful_blob_path",  #This feild is added during blob life cycle
-        validation_successful_blob_url="http://127.0.0.1:10000/validation_successful_blob_url",  #This feild is added during blob life cycle
-        is_processed_for_validation=False,  #This feild is added during blob life cycle
-        is_validation_successful =False,   #This feild is added during blob life cycle
-        meta_object=meta_data)
-    
+        failed_blob_path="failed_blob_path",
+        failed_blob_url="http://127.0.0.1:10000/failed_blob_url",  # This feild is added during blob life cycle
+        validation_successful_blob_path="validation_successful_blob_path",  # This feild is added during blob life cycle
+        validation_successful_blob_url="http://127.0.0.1:10000/validation_successful_blob_url",  # This feild is added during blob life cycle
+        is_processed_for_validation=False,  # This feild is added during blob life cycle
+        is_validation_successful=False,  # This feild is added during blob life cycle
+        meta_object=meta_data,
+    )
+
     input_blob.save()
     me.disconnect(alias="input_blob_to_mongodb")

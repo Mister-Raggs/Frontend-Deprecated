@@ -43,3 +43,9 @@ class CitadelDBException(CitadelIDPWebException):
     """
     Exception to be raised for all DB related operations.
     """
+
+
+class ContainerMissingException(CitadelIDPWebException):
+    """
+    Exception to be raised if default container dosen't exists.
+    """

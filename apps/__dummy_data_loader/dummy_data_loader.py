@@ -3,19 +3,20 @@ import os
 import random
 from typing import List
 import mongoengine as me
-
-from apps.common import utils
+from azure.storage.blob import BlobServiceClient
+from apps.common import utils, constants
+from apps.common.custom_exceptions import ContainerMissingException
 from apps.models.company_model import AddressCountry, CompanyAddress, CompanyModel, ContactNumber, ContactNumberType
 from apps.models.user_model import UserModel, UserRole, UserSalutationTypes
 
 logging.basicConfig(level=logging.INFO)
 me.connect(host="mongodb://127.0.0.1:27017/citadel-idp-db-test-1", alias="citadel_frontend_app")
-
-companies_to_generate = 500
+blob_storage_coonection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+companies_to_generate = 10
 
 
 def load_dummy_companies_data():
-    for i in range(1, companies_to_generate):
+    for i in range(0, companies_to_generate):
         company: CompanyModel = CompanyModel.objects(full_name="Full Name " + str(i)).first()
         if company is None:
             company_address = CompanyAddress(
@@ -39,6 +40,8 @@ def load_dummy_companies_data():
             )
             company.save()
             company.reload()
+            # Create company blob folder structure for new companies
+            create_company_folder_structure(company.pk)
             logging.info("Successfully created dummy company with full_name %s", company.full_name)
 
 
@@ -91,6 +94,33 @@ def read_file_to_list(file_path) -> List[str]:
         for line in file:
             data.append(line.rstrip())
     return data
+
+
+def create_company_folder_structure(pk: str):
+    blob_service_client = BlobServiceClient.from_connection_string(blob_storage_coonection_string)
+    container_list = [container.name for container in blob_service_client.list_containers()]
+    if not constants.DEFAULT_BLOB_CONTAINER in container_list:
+        raise ContainerMissingException(f"{constants.DEFAULT_BLOB_CONTAINER} container does not exist")
+
+    # Creating Folder Structure
+    subfolders_list = [
+        constants.DEFAULT_INCOMING_SUBFOLDER,
+        constants.DEFAULT_VALIDATION_SUCCESSFUL_SUBFOLDER,
+        constants.DEFAULT_VALIDATION_FAILED_SUBFOLDER,
+        constants.DEFAULT_INPROGRESS_SUBFOLDER,
+        constants.DEFAULT_SUCCESSFUL_SUBFOLDER,
+        constants.DEFAULT_FAILED_SUBFOLDER,
+    ]
+
+    container_client = blob_service_client.get_container_client(constants.DEFAULT_BLOB_CONTAINER)
+
+    for subfolder in subfolders_list:
+        create_folder(f"{constants.COMPANY_ROOT_FOLDER_PREFIX}{pk}", subfolder, container_client)
+
+
+def create_folder(company_folder: str, subfolder: str, container_client):
+    blob_client = container_client.get_blob_client(f"{company_folder}{subfolder}dummy")
+    blob_client.upload_blob(b"")
 
 
 if __name__ == "__main__":
