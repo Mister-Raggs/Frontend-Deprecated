@@ -14,7 +14,7 @@ RUN rm -rf ./.venv                                                              
     rm -rfv ./flask-session-store/*                                               &&\
     rm -rfv ./logs/*                                                            &&\
     apt-get update                                                              &&\
-    apt-get install -y apt-utils bash curl wget vim                             &&\
+    apt-get install -y apt-utils bash curl wget vim libmagic1                   &&\
     pip3 install --root-user-action=ignore --upgrade --no-cache-dir pip         &&\
     pip3 install --root-user-action=ignore --no-cache-dir -r requirements.txt   &&\
     apt-get clean                                                               &&\

@@ -2,16 +2,28 @@
 
 {% block title %} Upload Documents {% endblock %}
 
+<!-- Element injected in the BODY element -->
+{% block body_class %} sidebar-mini pace-primary {% endblock body_class %}
+
+<!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
+
+<!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<!-- Font Awesome -->
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<!-- pace-progress -->
 <link rel="stylesheet" href="/static/assets/plugins/pace-progress/themes/black/pace-theme-flat-top.css">
+<!-- adminlte-->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+
+<!-- Dropzone File Upload -->
 <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
 
 <style>
     /* Adjust the height of the dropzone container */
     .dropzone {
+        min-height: 200px;
         max-height: 500px;
         /* Set the desired maximum height */
         overflow: auto;
@@ -87,7 +99,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Size In Bytes</th>
+                            <th>Size (Bytes)</th>
                             <th>Type</th>
                             <th>Status</th>
                             <th>Upload Time</th>
@@ -139,24 +151,33 @@
 
         if (documentType !== '') {
             dropzoneContainer.style.display = 'block';
+            myDropzone.removeAllFiles();
         } else {
             dropzoneContainer.style.display = 'none';
         }
     });
 
     // Dropzone configuration
-    Dropzone.options.citadelFileUploadDropper = {
+    // need to define the avrs here because of the mixup problems between jinja2 templating and javascript
+    var maxParallelFileUploadsAllowed = parseInt("{{ max_parallel_file_uploads_allowed | tojson }}");
+    var maxFileSizeAllowedBytes = parseInt("{{ max_file_size_allowed_bytes | tojson }}");
+    var chunkSizeBytes = parseInt("{{ chunk_size_bytes | tojson }}");
+    var maxAllowedFileUploadsOnOnePage = parseInt("{{ max_allowed_file_uploads_on_one_page | tojson }}")
+
+    Dropzone.autoDiscover = false;
+    var myDropzone = new Dropzone("#citadel_file_upload_dropper", {
         paramName: 'citadel_file_upload_dropper',
         chunking: true,
         forceChunking: true,
-        parallelUploads: "{{ max_parallel_file_uploads_allowed }}",
-        retryChunks: true,
+        parallelUploads: maxParallelFileUploadsAllowed,
+        //retryChunks: true,
         createImageThumbnails: true,
-        maxThumbnailFilesize: "{{ max_file_size_allowed_bytes }}",
+        maxThumbnailFilesize: 9, //this is in MB
         filesizeBase: 1024,
         url: '/citadel/receive_document_upload',
-        maxFilesize: "{{ max_file_size_allowed_bytes }}",
-        chunkSize: "{{ chunk_size_bytes }}",
+        maxFilesize: maxFileSizeAllowedBytes,
+        chunkSize: chunkSizeBytes,
+        maxFiles: maxAllowedFileUploadsOnOnePage,
         renameFile: function (file) {
             const documentType = document.getElementById('document_type').value;
             const originalFileName = file.name;
@@ -166,26 +187,16 @@
             return newFileName;
         },
         init: function () {
-            this.on("complete", function (file) {
-                // generate the status msg
-                var status_msg = "";
-                if (file.status.toLowerCase() == "error") {
-                    status_msg = '<span class="text-danger">' + toTitleCase(file.status)
-                        + " - " + file.xhr.responseText + "</span>";
-                } else if (file.status.toLowerCase() == "success") {
-                    status_msg = '<span class="text-success">' + toTitleCase(file.status) + "</span>";
-                } else {
-                    status_msg = '<span class="text-warning">' + toTitleCase(file.status)
-                        + " - " + file.xhr.responseText + "</span>";
-                }
+            this.on("maxfilesexceeded", function () {
+                file = this.files[this.files.length - 1]
+                var file_name = file.name + " (" + $('#document_type').val() + ")"
 
-                //add the row ot upload list table
                 var tr_element = "<tr>";
-                tr_element += "<td>" + file.name + "</td>";
-                tr_element += "<td>" + file.size + "</td>";
-                tr_element += "<td>" + file.type + "</td>";
-                tr_element += "<td>" + status_msg + "</td>";
-                tr_element += "<td>" + formatter.format(new Date()) + "</td>";
+                tr_element += "<td><span class=\"text-danger\">" + file_name + "</span></td>";
+                tr_element += "<td><span class=\"text-danger\">" + file.size + "</span></td>";
+                tr_element += "<td><span class=\"text-danger\">" + file.type + "</span></td>";
+                tr_element += "<td><span class=\"text-danger\"> Max allowed document uploads exceeded. Refresh the page to upload more documents. </span></td>";
+                tr_element += "<td><span class=\"text-danger\">" + formatter.format(new Date()) + "</span></td>";
 
                 // check and make the table card visible if its not
                 if ($("#uploaded_documents_list_card").not(":visible")) {
@@ -194,8 +205,43 @@
 
                 $("#uploaded_documents_list_table tbody").prepend(tr_element);
             });
+
+            this.on("complete", function (file) {
+                // generate the status msg
+                var status_msg = "";
+                if (file.status.toLowerCase() == "error") {
+                    if (file.xhr) {
+                        status_msg = '<span class="text-danger">' + toTitleCase(file.status)
+                            + " - " + file.xhr.responseText + "</span>";
+                    }
+                } else if (file.status.toLowerCase() == "success") {
+                    status_msg = '<span class="text-success">' + toTitleCase(file.status) + "</span>";
+                } else if (file.xhr) {
+                    status_msg = '<span class="text-warning">' + toTitleCase(file.status)
+                        + " - " + file.xhr.responseText + "</span>";
+                }
+
+                if (status_msg != "") {
+                    var file_name = file.name + " (" + $('#document_type').val() + ")"
+                    //add the row ot upload list table
+                    var tr_element = "<tr>";
+                    tr_element += "<td>" + file_name + "</td>";
+                    tr_element += "<td>" + file.size + "</td>";
+                    tr_element += "<td>" + file.type + "</td>";
+                    tr_element += "<td>" + status_msg + "</td>";
+                    tr_element += "<td>" + formatter.format(new Date()) + "</td>";
+
+                    // check and make the table card visible if its not
+                    if ($("#uploaded_documents_list_card").not(":visible")) {
+                        $("#uploaded_documents_list_card").show(300);
+                    }
+
+                    $("#uploaded_documents_list_table tbody").prepend(tr_element);
+                }
+            });
         },
-    };
+    });
+
 
 </script>
 {% endblock javascripts %}

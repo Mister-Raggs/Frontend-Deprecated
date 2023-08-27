@@ -1,12 +1,17 @@
+import hashlib
 import logging
-from datetime import datetime
 import os
-from apps.common import config_reader, constants
+
+import magic
+from apps.common import config_reader
 from apps.common.custom_exceptions import MissingDocumentTypeException, MissingConfigException
+
 import base64
 from azure.storage.blob import BlobServiceClient
 from apps.models.input_blob_model import MetaData, ContentLength, ContentLengthUnit, InputBlob
 import mongoengine as me
+from azure.storage.blob import BlobServiceClient, ContainerClient
+
 
 # dicts for forms
 user_salutations_dict = {
@@ -115,7 +120,7 @@ ca_states_dict = {
 }
 
 
-def get_connection_string():
+def get_azure_storage_connection_string():
     """
     Removes " " from starting and end of the string.
 
@@ -146,6 +151,49 @@ def get_connection_string():
     return connection_string
 
 
+def get_mongodb_connection_string():
+    """
+    Removes " " from starting and end of the string.
+
+    Return:
+        returns connection string
+    """
+
+    if not config_reader.config_data.has_option("Main", "mongodb-connection-string"):
+        raise MissingConfigException("Main.mongodb-connection-string.")
+
+    connection_string = config_reader.config_data.get("Main", "mongodb-connection-string")
+
+    if not string_is_not_empty(connection_string):
+        raise MissingConfigException("Main.mongodb-connection-string is present but has empty value.")
+
+    if connection_string.startswith(("'", '"')) and connection_string.endswith(("'", '"')):
+        connection_string = connection_string.strip("'\"")
+
+    return connection_string
+
+
+def get_azure_storage_blob_service_client():
+    """
+    blob_service_client calls BobServiceClient
+
+    Returns:
+        BobServiceClient
+    """
+    return BlobServiceClient.from_connection_string(get_azure_storage_connection_string())
+
+
+def get_azure_storage_blob_container_client(blob_container_name: str) -> ContainerClient:
+    """
+    container_client calls ContainerClient
+
+    Returns:
+        ContainerClient
+    """
+    blob_service_client = BlobServiceClient.from_connection_string(get_azure_storage_connection_string())
+    return blob_service_client.get_container_client(blob_container_name)
+
+
 def string_is_not_empty(input_str):
     return (input_str is not None) and len(input_str) > 0
 
@@ -168,6 +216,19 @@ def get_segment(request):
         return segment
     except:
         return None
+
+
+def get_md5_hash_for_file(file) -> str:
+    md5 = hashlib.md5()
+    with open(file, "rb") as f:
+        for chunk in iter(lambda: f.read(128 * md5.block_size), b""):
+            md5.update(chunk)
+    return md5.hexdigest()
+
+
+def get_file_mime_type(filepath) -> str:
+    mime = magic.Magic(mime=True)
+    return mime.from_file(filepath)
 
 
 def get_document_type_from_file_name(file_path):
@@ -309,3 +370,4 @@ def save_input_blob_to_mongodb(status: str, path: str):
 
     input_blob.save()
     me.disconnect(alias="input_blob_to_mongodb")
+

@@ -31,6 +31,7 @@ def document_upload_page():
         max_file_size_allowed_bytes=constants.MAX_FILE_SIZE_ALLOWED_BYTES,
         chunk_size_bytes=constants.CHUNK_SIZE_BYTES,
         max_parallel_file_uploads_allowed=constants.MAX_PARALLEL_FILE_UPLOADS_ALLOWED,
+        max_allowed_file_uploads_on_one_page=constants.MAX_ALLOWED_FILE_UPLOADS_ON_ONE_PAGE,
     )
 
 
