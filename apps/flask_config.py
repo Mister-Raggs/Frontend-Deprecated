@@ -26,9 +26,10 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_DURATION = 3600
 
 
-class DebugConfig(Config):
+class LocalConfig(Config):
     DEBUG = True
+    FLASK_ENV = "development"
 
 
 # Load all possible configurations
-config_dict = {"Production": ProductionConfig, "Debug": DebugConfig}
+config_dict = {"Production": ProductionConfig, "Local": LocalConfig}

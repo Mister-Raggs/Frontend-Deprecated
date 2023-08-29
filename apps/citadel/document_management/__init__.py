@@ -5,4 +5,4 @@ Copyright (c) 2023 - Aark Global
 
 from flask import Blueprint
 
-blueprint = Blueprint("seq_blueprint", __name__, url_prefix="")
+blueprint = Blueprint("document_management_blueprint", __name__, url_prefix="")

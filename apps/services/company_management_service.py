@@ -63,7 +63,7 @@ def prepare_companies_list_data(draw, search_value, start_index, page_length):
     records_filtered = records_total
     if utils.string_is_not_empty(search_value):
         companies_data = CompanyModel.objects(
-            Q(full_name__contains=search_value) | Q(short_name__contains=search_value)
+            Q(full_name__icontains=search_value) | Q(short_name__icontains=search_value)
         )[start_index:end_index]
 
         # get the count of records also

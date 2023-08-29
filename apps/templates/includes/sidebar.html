@@ -37,18 +37,22 @@
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu"
         data-accordion="false">
-        <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-        <li class="nav-item has-treeview {% if 'admin' in segment %} menu-open {% endif %}">
-          <a href="#" class="nav-link {% if 'admin' in segment %} active {% endif %}">
-            <i class="nav-icon fas fa-tools"></i>
+
+        <li class="nav-header">ADMIN SECTION</li>
+
+        <!-- Company Management Links -->
+        <li
+          class="nav-item has-treeview {% if ('admin' in segment) and (('company' in segment) or ('companies' in segment)) %} menu-open {% endif %}">
+          <a href="#"
+            class="nav-link {% if ('admin' in segment) and (('company' in segment) or ('companies' in segment)) %}  active {% endif %}">
+            <i class="nav-icon fas fa-building"></i>
             <p>
-              Admin Section
+              Company Management
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
           <ul class="nav nav-treeview">
-            <!-- Company Management Links -->
+
             <li class="nav-item">
               <a href="/citadel/admin_add_update_company"
                 class="nav-link {% if 'admin_add_update_company' in segment %} active {% endif %}">
@@ -63,8 +67,19 @@
                 <p>List All Companies</p>
               </a>
             </li>
+          </ul>
+        </li>
 
-            <!-- User Management Links -->
+        <!-- User Management Links -->
+        <li class="nav-item has-treeview {% if ('admin' in segment) and ('user' in segment) %} menu-open {% endif %}">
+          <a href="#" class="nav-link {% if ('admin' in segment) and ('user' in segment) %} active {% endif %}">
+            <i class="nav-icon fas fa-users-cog"></i>
+            <p>
+              User Management
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
             <li class="nav-item">
               <a href="/citadel/admin_add_update_user"
                 class="nav-link {% if 'admin_add_update_user' in segment %} active {% endif %}">
@@ -82,6 +97,23 @@
           </ul>
         </li>
 
+        <li class="nav-header">DOCUMENT MANAGEMENT</li>
+
+        <!-- Document Management Links -->
+        <li class="nav-item">
+          <a href="/citadel/document_upload" class="nav-link {% if 'document_upload' in segment %} active {% endif %}">
+            <i class="fas fa-file-upload nav-icon"></i>
+            <p>Upload Documents</p>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/index2.html" class="nav-link {% if 'index2.html' in segment %} active {% endif %}">
+            <i class="fas fa-archive nav-icon"></i>
+            <p>List All Documents</p>
+          </a>
+        </li>
+
+        <li class="nav-header">OTHERS</li>
         <li class="nav-item has-treeview {% if 'index' in segment %} menu-open {% endif %}">
           <a href="#" class="nav-link {% if 'index' in segment %} active {% endif %}">
             <i class="nav-icon fas fa-tachometer-alt"></i>

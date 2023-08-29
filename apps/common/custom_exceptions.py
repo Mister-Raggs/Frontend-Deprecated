@@ -21,6 +21,12 @@ class MissingDocumentTypeException(CitadelIDPWebException):
     """
 
 
+class DocumentManagementException(CitadelIDPWebException):
+    """
+    Exception to be raised when document type cannot be inferred from file name.
+    """
+
+
 class CompanyNotFoundException(CitadelIDPWebException):
     """
     Exception to be raised when document type cannot be inferred from file name.

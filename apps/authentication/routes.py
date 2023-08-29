@@ -41,7 +41,10 @@ def login():
                             if verify_user_password(password, user.password):
                                 login_user(user)
                                 populate_login_session(user)
-                                logging.info("Successfully logged in user email: %s", session.get("user_email"))
+                                logging.info(
+                                    "Successfully logged in user email: %s",
+                                    session.get(constants.SESSION_USER_EMAIL_KEY),
+                                )
                                 return redirect(url_for("authentication_blueprint.route_default"))
                             else:
                                 msg = "Wrong email or password."
@@ -142,3 +145,4 @@ def populate_login_session(user_model: UserModel):
     session[constants.SESSION_USER_LAST_NAME_KEY] = user_model.last_name
     session[constants.SESSION_USER_EMAIL_KEY] = user_model.email
     session[constants.SESSION_USER_ROLE_KEY] = user_model.roles[0]
+    session[constants.SESSION_USER_COMPANY_ROW_ID] = str(user_model.company.pk)

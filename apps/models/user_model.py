@@ -42,12 +42,13 @@ class UserModel(BaseModel, UserMixin):
 
     meta = {
         "db_alias": constants.MONGODB_CONN_ALIAS,
+        "collection": "users",
         "indexes": [
             "first_name",
             "middle_name",
             "last_name",
             "email",
-            "#company",
+            "company",
         ],
     }
 

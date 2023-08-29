@@ -41,6 +41,7 @@ class CompanyModel(BaseModel):
     is_deleted = me.BooleanField(required=True, default=False)
 
     meta = {
+        "collection": "companies",
         "db_alias": constants.MONGODB_CONN_ALIAS,
         "indexes": [
             "full_name",
