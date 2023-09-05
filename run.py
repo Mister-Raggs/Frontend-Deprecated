@@ -70,31 +70,3 @@ logging.info("Flask Asset Root: %s", app_config.ASSETS_ROOT)
 # If we run it as "python -m run" then we need this to keep the server running.
 # if __name__ == "__main__":
 #     app.run()
-
-
-import threading
-from datetime import datetime
-import time
-from apps.blob_management.validate_and_move_files import check_and_process_blob
-
-
-def run_scheduled_job():
-    while True:
-        now = datetime.now().time()
-        start_time = datetime.strptime("08:00:00", "%H:%M:%S")
-        end_time = datetime.strptime("23:00:00", "%H:%M:%S")
-
-        if start_time.time() <= now <= end_time.time():
-            print("Running schedule task...")
-            check_and_process_blob()
-        else:
-            print(f"Scheduled job only runs between {start_time.time()} and {end_time.time()}")
-
-        time.sleep(5)
-
-
-# Create a thread to run the scheduler
-scheduler_thread = threading.Thread(target=run_scheduled_job)
-scheduler_thread.daemon = True  # Set as a daemon thread so it exits when the main program exits
-# Start the scheduler thread
-scheduler_thread.start()

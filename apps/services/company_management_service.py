@@ -9,7 +9,7 @@ from apps.citadel.company_management.forms import AddUpdateCompanyForm
 from apps.models.company_model import CompanyModel, CompanyAddress, AddressCountry, check_company_exists_by_full_name
 from apps.common import utils
 from apps.common.custom_exceptions import CitadelDBException, CitadelIDPWebException, CompanyNotFoundException
-from apps.blob_management.company_folder_creator import create_company_folder_structure
+from apps.services.company_folder_creator import create_company_folder_structure
 
 
 def get_company_details_by_row_id(row_id) -> CompanyModel:
