@@ -27,6 +27,7 @@ def create_company_folder_structure(pk: str):
         create_folder(f"{constants.COMPANY_ROOT_FOLDER_PREFIX}{pk}", subfolder, container_client)
 
 
+# creating dummy file inside every company's sub-folder
 def create_folder(company_folder: str, subfolder: str, container_client: ContainerClient):
     blob_client = container_client.get_blob_client(f"{company_folder}{subfolder}dummy")
     blob_client.upload_blob(b"")
