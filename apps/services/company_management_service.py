@@ -162,8 +162,6 @@ def save_company_details(form: AddUpdateCompanyForm) -> str:
     except:
         raise CitadelDBException(f"Failed to save CompanyModel for company '{form.full_name.data}'.")
 
-    # TODO: create company blog folder structure for incoming documents and for form recognizer result jsons
-
 
 # TODO: add other form data validations here
 def validate_add_update_company_data(form: AddUpdateCompanyForm) -> str:
