@@ -14,6 +14,47 @@ from apps.common.custom_exceptions import DocumentNotFoundException, CitadelIDPW
 from mongoengine.errors import ValidationError
 
 
+##########################################################################################
+# APIs from here - these have /api prefixes
+##########################################################################################
+
+@blueprint.route("/api/get_list_document_data", methods=["POST"])
+@login_required
+def api_get_document_data():
+    # Detect the current page
+    segment = utils.get_segment(request)
+    # logging.info("Request form is: %s", request.form)
+    draw = request.form["draw"]
+    page_number = int(request.form["start"])
+    length = int(request.form["length"])
+    search_value = request.form["search[value]"]
+    # TODO: validate the request params
+    response = document_management_service.prepare_document_list_data(draw, search_value, page_number, length)
+    # logging.info("response is -> %s", response)
+    return make_response(response, 200)
+
+
+@blueprint.route("/api/document_toggle_activate_delete", methods=["POST"])
+@login_required
+def toggle_document_status():
+    document_id = request.form["document_id"]
+    action = request.form["action"]
+    if utils.string_is_not_empty(document_id) and utils.string_is_not_empty(action):
+        try:
+            document_management_service.handle_document_toggle_activate_delete(document_id, action)
+        except (CitadelIDPWebException, DocumentNotFoundException, ValidationError) as e:
+            msg = f"Failed to toggle is active for document id {document_id}"
+            logging.exception(msg)
+            return make_response(msg, 404)
+    else:
+        return make_response("Missing document_id parameter.", 400)
+    return make_response("Success, 200")
+
+
+##########################################################################################
+# Action routes from here
+##########################################################################################
+
 @blueprint.route(
     "/document_upload",
 )
@@ -65,53 +106,8 @@ def receive_document_upload():
         return render_template("home/page-404.html"), HTTPStatus.NOT_FOUND
 
 
-##########################################################################################
-# APIs from here - these have /api prefixes for list all documents
-##########################################################################################
-
-
-@blueprint.route("/api/get_list_document_data", methods=["POST"])
+@blueprint.route( "/list_all_documents",)
 @login_required
-def api_get_document_data():
-    # Detect the current page
-    segment = utils.get_segment(request)
-    # logging.info("Request form is: %s", request.form)
-    draw = request.form["draw"]
-    page_number = int(request.form["start"])
-    length = int(request.form["length"])
-    search_value = request.form["search[value]"]
-    # TODO: validate the request params
-    response = document_management_service.prepare_document_list_data(draw, search_value, page_number, length)
-    # logging.info("response is -> %s", response)
-    return make_response(response, 200)
-
-
-@blueprint.route("/api/document_toggle_activate_delete", methods=["POST"])
-@login_required
-def toggle_document_status():
-    document_id = request.form["document_id"]
-    action = request.form["action"]
-    if utils.string_is_not_empty(document_id) and utils.string_is_not_empty(action):
-        try:
-            document_management_service.handle_document_toggle_activate_delete(document_id, action)
-        except (CitadelIDPWebException, DocumentNotFoundException, ValidationError) as e:
-            msg = f"Failed to toggle is active for document id {document_id}"
-            logging.exception(msg)
-            return make_response(msg, 404)
-    else:
-        return make_response("Missing document_id parameter.", 400)
-    return make_response("Success, 200")
-
-
-##########################################################################################
-# Action routes from here for list all documents
-##########################################################################################
-
-
-@blueprint.route(
-    "/list_all_documents",
-)
-# @login_required
 def show_list_all_documents():
     segment = utils.get_segment(request)
     """
@@ -120,3 +116,5 @@ def show_list_all_documents():
         _type_: _description_
     """
     return render_template("citadel/list_all_documents.html", segment=segment)
+
+
