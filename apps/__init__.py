@@ -16,7 +16,7 @@ import mongoengine as me
 
 from apps.common import config_reader, constants
 from apps.common.custom_exceptions import MissingConfigException
-
+from apps.services.company_folder_creator import create_company_folder_structure
 login_manager = LoginManager()
 
 
@@ -106,6 +106,7 @@ def __check_and_create_company_data():
         )
         company.save()
         company.reload()
+        create_company_folder_structure(company.pk)
         logging.info("Successfully created default company with full_name %s", company.full_name)
     else:
         logging.info("Company data already exists with full_name %s", company.full_name)

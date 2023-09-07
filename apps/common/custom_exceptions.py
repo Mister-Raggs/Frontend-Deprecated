@@ -55,7 +55,15 @@ class MissingFolderException(CitadelIDPWebException):
     """
     Exception to be raised for all DB related operations.
     """
+
+
 class DocumentNotFoundException(CitadelIDPWebException):
     """
     Exception to be raised for all DB related operations.
+    """
+
+
+class JobExecutionException(CitadelIDPWebException):
+    """
+    Exception to be raised when a folder is expected to be present but doesn't exist.
     """

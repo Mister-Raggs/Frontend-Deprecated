@@ -7,6 +7,11 @@ from apps.models.company_model import CompanyModel
 from apps.models.user_model import UserModel
 
 
+class ResultJsonMetaData(me.EmbeddedDocument):
+    json_result_container_name = me.StringField()
+    json_result_blob_path = me.StringField()
+
+
 class LifecycleStatusTypes(str, Enum):
     UPLOADED = "UPLOADED"
     INITIAL_VALIDATING = "INITIAL_VALIDATING"
@@ -23,7 +28,6 @@ class LifecycleStatus(me.EmbeddedDocument):
 
     """
 
-    # input_blob_status = me.StringField(required=True)
     status = me.EnumField(LifecycleStatusTypes, required=True, default=LifecycleStatusTypes.UPLOADED)
     message = me.StringField(required=True)
     updated_date_time = me.DateTimeField(required=True)
@@ -69,6 +73,7 @@ class MetaData(me.EmbeddedDocument):
             + f", blob_type='{self.blob_type}'"
             + f", content_length_bytes='{self.content_length_bytes}'"
             + f", content_md5='{self.content_md5}'"
+            + ")"
         )
 
     def __str__(self):
@@ -99,6 +104,7 @@ class InputBlob(BaseModel):
 
     blob_name = me.StringField(required=True)
     blob_container_name = me.StringField(required=True)
+    blob_type = me.StringField()
 
     incoming_blob_path = me.StringField(required=True)
     incoming_blob_url = me.URLField(required=True)
@@ -110,6 +116,7 @@ class InputBlob(BaseModel):
     validation_successful_blob_url = me.URLField()
 
     in_progress_blob_path = me.StringField()
+    in_progress_blob_sas_url = me.URLField()
     in_progress_blob_url = me.URLField()
 
     success_blob_path = me.StringField()
@@ -117,6 +124,9 @@ class InputBlob(BaseModel):
 
     failed_blob_path = me.StringField()
     failed_blob_url = me.URLField()
+
+    # if filed is picked for validation
+    is_picked_for_validation = me.BooleanField(required=False, default=False)
 
     # is_uploaded mean blob is uploaded ot Azure storage.
     is_uploaded = me.BooleanField(required=True, default=True)
@@ -126,6 +136,9 @@ class InputBlob(BaseModel):
 
     # is_validation_successful mean if validation was successful or not
     is_validation_successful = me.BooleanField(required=True, default=False)
+
+    # if file is been picked for Analysis
+    is_picked_for_analysis = me.BooleanField(required=False, default=False)
 
     # is_processing_for_data mean backend has moved it to in progress but not processed yet.
     is_processing_for_data = me.BooleanField(required=True, default=False)
@@ -147,6 +160,9 @@ class InputBlob(BaseModel):
 
     metadata = me.EmbeddedDocumentField(MetaData, required=True)
     lifecycle_status_list = me.ListField(me.EmbeddedDocumentField(LifecycleStatus), required=True)
+
+    json_output = me.EmbeddedDocumentField(ResultJsonMetaData, required=False)
+    form_recognizer_model_id = me.StringField()
 
     meta = {
         "collection": "input_document_blobs",
@@ -179,14 +195,29 @@ class InputBlob(BaseModel):
             + f"_id='{str(self.pk)}'"
             + f", blob_name='{self.blob_name}'"
             + f", blob_container_name='{self.blob_container_name}'"
+            + f", blob_type='{self.blob_type}'"
             + f", incoming_blob_path='{self.incoming_blob_path}'"
             + f", incoming_blob_url='{self.incoming_blob_url}'"
             + f", validation_failed_blob_path='{self.validation_failed_blob_path}'"
             + f", validation_failed_blob_url='{self.validation_failed_blob_url}'"
             + f", validation_successful_blob_path='{self.validation_successful_blob_path}'"
             + f", validation_successful_blob_url='{self.validation_successful_blob_url}'"
+            + f", in_progress_blob_path='{self.in_progress_blob_path}'"
+            + f", in_progress_blob_url='{self.in_progress_blob_url}'"
+            + f", in_progress_blob_sas_url='{self.in_progress_blob_sas_url}'"
+            + f", success_blob_path='{self.success_blob_path}'"
+            + f", success_blob_url='{self.success_blob_url}'"
+            + f", failed_blob_path='{self.failed_blob_path}'"
+            + f", failed_blob_url='{self.failed_blob_url}'"
+            + f", is_uploaded='{self.is_uploaded}'"
+            + f", is_picked_for_validation='{self.is_picked_for_validation}'"
             + f", is_processed_for_validation='{self.is_processed_for_validation}'"
             + f", is_validation_successful='{self.is_validation_successful}'"
+            + f", is_picked_for_analysis='{self.is_picked_for_analysis}'"
+            + f", is_processing_for_data='{self.is_processing_for_data}'"
+            + f", is_processed_for_data='{self.is_processed_for_data}'"
+            + f", is_processed_success='{self.is_processed_success}'"
+            + f", is_processed_failed='{self.is_processed_failed}'"
             + f", uploader_user='{uploader_user}'"
             + f", uploader_company='{uploader_company}'"
             + f", is_active='{self.is_active}'"
@@ -194,6 +225,8 @@ class InputBlob(BaseModel):
             + f", date_created='{self.date_created}'"
             + f", date_last_modified='{self.date_last_modified}'"
             + f", metadata: {self.metadata}"
+            + f", json_output: {self.json_output}"
+            + f", form_recognizer_model_id: {self.form_recognizer_model_id}"
             + f", lifecycle_status_list: '{', '.join([str(e) for e in self.lifecycle_status_list])}'"
             + ")"
         )

@@ -38,6 +38,7 @@ from sys import exit
 from apps.flask_config import config_dict
 from apps import create_app
 
+
 # The configuration
 get_config_mode = "Local"
 if app_env.lower() == "production":
@@ -70,4 +71,16 @@ logging.info("Flask Asset Root: %s", app_config.ASSETS_ROOT)
 # If we run it as "python -m run" then we need this to keep the server running.
 # if __name__ == "__main__":
 #     app.run()
+from apps.jobs.job_scheduler_factory import collect_and_schedule_jobs
+from time import sleep
 
+app_jobs_scheduler = collect_and_schedule_jobs()
+logging.info("App bootstrap completed successfully.")
+# Runs an infinite loop
+
+try:
+    while True:
+        sleep(10)
+except (KeyboardInterrupt, SystemExit):
+    logging.info("Received app shutdown request. Performing graceful scheduler shutdown.")
+    app_jobs_scheduler.shutdown(wait=True)
