@@ -3,22 +3,17 @@ import logging
 from apps.models.input_blob_model import InputBlob, LifecycleStatus, LifecycleStatusTypes, MetaData
 from typing import List
 from azure.storage.blob import BlobServiceClient
+from datetime import datetime
 
 
 def check_validate_and_move_blob():
     """
-    Checks and processes the Db and move files in Azure Blob Storage.
+    Checks and processes the Db and move blobs in Azure Blob Storage.
 
     """
     blob_service_client = utils.get_azure_storage_blob_service_client()
-    logging.info("getting list of input_blobs from Mongodb.")
+    logging.info("Getting list of input_blobs from Mongodb.")
     input_blob_list = get_list_of_input_blob_from_mongodb()
-
-    # updating the picked validation to True as blob will not be picked by other instances if it's true.
-    for input_blob in input_blob_list:
-        input_blob.is_picked_for_validation = True
-        # Saving input_blob to Mongodb.
-        save_input_blob(input_blob)
 
     for input_blob in input_blob_list:
         if not input_blob.incoming_blob_path.startswith(constants.COMPANY_ROOT_FOLDER_PREFIX):
@@ -28,7 +23,7 @@ def check_validate_and_move_blob():
             processing_lifecycle_status = LifecycleStatus(
                 status=LifecycleStatusTypes.INITIAL_VALIDATING,
                 message="File is getting validated",
-                updated_date_time=input_blob.date_last_modified,
+                updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
             input_blob.lifecycle_status_list.append(processing_lifecycle_status)
             save_input_blob(input_blob)
@@ -48,7 +43,7 @@ def check_validate_and_move_blob():
                 processing_lifecycle_status = LifecycleStatus(
                     status=LifecycleStatusTypes.INITIAL_VALIDATED,
                     message="File has been validated successful",
-                    updated_date_time=input_blob.date_last_modified,
+                    updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
                 input_blob.lifecycle_status_list.append(processing_lifecycle_status)
                 input_blob.is_validation_successful = True
@@ -67,7 +62,7 @@ def check_validate_and_move_blob():
                 processing_lifecycle_status = LifecycleStatus(
                     status=LifecycleStatusTypes.INITIAL_VALIDATED,
                     message="File failed to validate",
-                    updated_date_time=input_blob.date_last_modified,
+                    updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
                 input_blob.lifecycle_status_list.append(processing_lifecycle_status)
                 save_input_blob(input_blob)
