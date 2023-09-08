@@ -24,7 +24,7 @@ job_stores = {
 }
 
 executors = {
-    "default": ThreadPoolExecutor(10),
+    "default": ThreadPoolExecutor(max_workers=3, pool_kwargs={"thread_name_prefix": "Job_TPE"}),
     "processpool": ProcessPoolExecutor(3),
 }
 
