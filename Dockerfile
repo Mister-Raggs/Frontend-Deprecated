@@ -11,7 +11,7 @@ ENV APP_ENV=local-docker
 # install the dependencies and packages in the requirements file
 # Install native libraries, required for numpy
 RUN rm -rf ./.venv                                                              &&\
-    rm -rfv ./flask-session-store/*                                               &&\
+    rm -rfv ./flask-session-store/*                                             &&\
     rm -rfv ./logs/*                                                            &&\
     apt-get update                                                              &&\
     apt-get install -y apt-utils bash curl wget vim libmagic1                   &&\

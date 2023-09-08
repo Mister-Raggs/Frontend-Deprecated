@@ -17,6 +17,7 @@ import mongoengine as me
 from apps.common import config_reader, constants
 from apps.common.custom_exceptions import MissingConfigException
 from apps.services.company_folder_creator import create_company_folder_structure
+
 login_manager = LoginManager()
 
 
@@ -76,6 +77,10 @@ def configure_database(app):
         )
     else:
         raise MissingConfigException("'mongodb-connection-string' config is missing.")
+
+
+def configure_jobs_scheduler():
+    job_scheduler_factory.collect_and_schedule_jobs()
 
 
 def __check_and_create_company_data():
@@ -154,5 +159,6 @@ def create_app(config):
     register_blueprints(app)
     setup_session(app)
     configure_database(app)
+    configure_jobs_scheduler()
     check_and_load_initial_data()
     return app

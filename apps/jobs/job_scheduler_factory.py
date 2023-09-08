@@ -20,6 +20,7 @@ def collect_and_schedule_jobs() -> BackgroundScheduler:
             module_name = job_file.name.replace(".py", "")
             module_path = f"apps.jobs.{module_name}"
             module = import_module(f"{module_path}")
+
             if hasattr(module, "job_task"):
                 # add the job to scheduler
                 app_jobs_scheduler.add_job(

@@ -23,25 +23,25 @@ class MissingDocumentTypeException(CitadelIDPWebException):
 
 class DocumentManagementException(CitadelIDPWebException):
     """
-    Exception to be raised when document type cannot be inferred from file name.
+    Exception in general document management.
     """
 
 
 class CompanyNotFoundException(CitadelIDPWebException):
     """
-    Exception to be raised when document type cannot be inferred from file name.
+    Exception to be raised when company is not found.
     """
 
 
 class UserNotFoundException(CitadelIDPWebException):
     """
-    Exception to be raised when document type cannot be inferred from file name.
+    Exception to be raised when user is not found.
     """
 
 
 class UserSaveException(CitadelIDPWebException):
     """
-    Exception to be raised when document type cannot be inferred from file name.
+    Exception to be raised when user cannot eb saved
     """
 
 
@@ -53,17 +53,19 @@ class CitadelDBException(CitadelIDPWebException):
 
 class MissingFolderException(CitadelIDPWebException):
     """
-    Exception to be raised for all DB related operations.
+    Exception to be raised for missing folders.
     """
 
 
 class DocumentNotFoundException(CitadelIDPWebException):
     """
-    Exception to be raised for all DB related operations.
+
+    Exception to be raised if document is not found.
+
     """
 
 
 class JobExecutionException(CitadelIDPWebException):
     """
-    Exception to be raised when a folder is expected to be present but doesn't exist.
+    Exception to be raised when a a job fails.
     """
