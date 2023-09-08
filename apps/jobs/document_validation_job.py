@@ -4,7 +4,7 @@ from datetime import datetime
 from apps.services.validate_and_move_blobs import check_validate_and_move_blob
 
 SCHEDULE_INTERVAL_IN_SECONDS = 4
-JOB_NAME = "DOCUMENT-VALIDATING-JOB"
+JOB_NAME = "DOCUMENT-VALIDATION-JOB"
 
 
 # function name needs to be job_task for automated picking.
@@ -33,5 +33,3 @@ def job_task():
         JOB_NAME,
         now.strftime("%Y-%m-%d %H:%M:%S"),
     )
-
-
