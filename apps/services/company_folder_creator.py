@@ -22,6 +22,8 @@ def create_company_folder_structure(pk: str):
         constants.DEFAULT_INPROGRESS_SUBFOLDER,
         constants.DEFAULT_SUCCESSFUL_SUBFOLDER,
         constants.DEFAULT_FAILED_SUBFOLDER,
+        constants.DEFAULT_PREVIEW_SUBFOLDER,
+        constants.DEFAULT_UNPROCESSED_SUBFOLDER
     ]
     for subfolder in subfolders_list:
         create_folder(f"{constants.COMPANY_ROOT_FOLDER_PREFIX}{pk}", subfolder, container_client)
