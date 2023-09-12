@@ -135,7 +135,7 @@ class InputBlob(BaseModel):
     # is_validation_successful mean if validation was successful or not
     is_validation_successful = me.BooleanField(required=True, default=False)
 
-    # is_validation_successful mean if validation was successful or not
+    # is_unprocessed mean if file is still unprocessed more than 6 hrs.
     is_unprocessed = me.BooleanField(required=True, default=False)
 
     # is_processing_for_data mean backend has moved it to in progress but not processed yet.
