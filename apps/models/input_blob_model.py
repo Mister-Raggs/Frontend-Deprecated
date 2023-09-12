@@ -5,12 +5,12 @@ from enum import Enum
 from apps.models.company_model import CompanyModel
 from apps.models.user_model import UserModel
 
- 
+
 class ResultJsonMetaData(me.EmbeddedDocument):
     json_result_container_name = me.StringField()
     json_result_blob_path = me.StringField()
 
- 
+
 class LifecycleStatusTypes(str, Enum):
     UPLOADED = "UPLOADED"
     INITIAL_VALIDATING = "INITIAL_VALIDATING"
@@ -20,7 +20,6 @@ class LifecycleStatusTypes(str, Enum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
- 
 
 class LifecycleStatus(me.EmbeddedDocument):
     """
@@ -30,7 +29,7 @@ class LifecycleStatus(me.EmbeddedDocument):
 
     status = me.EnumField(LifecycleStatusTypes, required=True, default=LifecycleStatusTypes.UPLOADED)
     message = me.StringField(required=True)
-    updated_date_time = me.DateTimeField(required=True) 
+    updated_date_time = me.DateTimeField(required=True)
 
     def __str__(self):
         return (
@@ -41,17 +40,15 @@ class LifecycleStatus(me.EmbeddedDocument):
             + ")"
         )
 
-
     def __repr__(self):
         return "LifecycleStatus(" + f"status='{self.status}'" + f", updated_date_time='{self.updated_date_time}'" + ")"
 
- 
+
 class MetaData(me.EmbeddedDocument):
     """
     Metadata, represents metadata attributes for the blob.
 
     """
-
 
     blob_type = me.StringField(required=True)
     form_recognizer_model_type = me.StringField(required=True)
@@ -68,7 +65,6 @@ class MetaData(me.EmbeddedDocument):
     # is the blob contents also encrypted with our own encryption
     blob_citadel_encrypted = me.BooleanField(required=True, default=False)
 
-
     def __repr__(self):
         return (
             "MetaData("
@@ -78,8 +74,6 @@ class MetaData(me.EmbeddedDocument):
             + f", content_md5='{self.content_md5}'"
             + ")"
         )
-
- 
 
     def __str__(self):
         return (
@@ -99,7 +93,6 @@ class MetaData(me.EmbeddedDocument):
             + ")"
         )
 
- 
 
 class InputBlob(BaseModel):
     """
@@ -124,6 +117,9 @@ class InputBlob(BaseModel):
     in_progress_blob_sas_url = me.URLField()
     in_progress_blob_url = me.URLField()
 
+    unprocessed_blob_path = me.StringField()
+    unprocessed_blob_url = me.URLField()
+
     success_blob_path = me.StringField()
     success_blob_url = me.URLField()
 
@@ -139,6 +135,9 @@ class InputBlob(BaseModel):
     # is_validation_successful mean if validation was successful or not
     is_validation_successful = me.BooleanField(required=True, default=False)
 
+    # is_validation_successful mean if validation was successful or not
+    is_unprocessed = me.BooleanField(required=True, default=False)
+
     # is_processing_for_data mean backend has moved it to in progress but not processed yet.
     is_processing_for_data = me.BooleanField(required=True, default=False)
 
@@ -151,27 +150,17 @@ class InputBlob(BaseModel):
     # is_processed_failed mean backend has processed it and moved to failed folder.
     is_processed_failed = me.BooleanField(required=True, default=False)
 
- 
-
     uploader_user = me.ReferenceField(UserModel, required=True)
     uploader_company = me.ReferenceField(CompanyModel, required=True)
-
- 
 
     is_active = me.BooleanField(required=True, default=True)
     is_deleted = me.BooleanField(required=True, default=False)
 
- 
-
     metadata = me.EmbeddedDocumentField(MetaData, required=True)
     lifecycle_status_list = me.ListField(me.EmbeddedDocumentField(LifecycleStatus), required=True)
 
- 
-
     json_output = me.EmbeddedDocumentField(ResultJsonMetaData, required=False)
     form_recognizer_model_id = me.StringField()
-
- 
 
     meta = {
         "collection": "input_document_blobs",
@@ -181,8 +170,6 @@ class InputBlob(BaseModel):
             "blob_container_name",
         ],
     }
-
- 
 
     # --------------------------------------------------------------------------------
     def __repr__(self):
@@ -197,8 +184,6 @@ class InputBlob(BaseModel):
             + f", uploader_company='{uploader_company}'"
             + ")"
         )
-
- 
 
     def __str__(self):
         uploader_user = f"{self.uploader_user.first_name} {self.uploader_user.last_name} [{str(self.uploader_user.pk)}]"
@@ -217,6 +202,8 @@ class InputBlob(BaseModel):
             + f", validation_successful_blob_url='{self.validation_successful_blob_url}'"
             + f", in_progress_blob_path='{self.in_progress_blob_path}'"
             + f", in_progress_blob_url='{self.in_progress_blob_url}'"
+            + f", unprocessed_blob_path='{self.unprocessed_blob_path}'"
+            + f", unprocessed_blob_url='{self.unprocessed_blob_url}'"
             + f", in_progress_blob_sas_url='{self.in_progress_blob_sas_url}'"
             + f", form_recognizer_model_id: {self.form_recognizer_model_id}"
             + f", success_blob_path='{self.success_blob_path}'"
@@ -226,6 +213,7 @@ class InputBlob(BaseModel):
             + f", is_uploaded='{self.is_uploaded}'"
             + f", is_processed_for_validation='{self.is_processed_for_validation}'"
             + f", is_validation_successful='{self.is_validation_successful}'"
+            + f", is_unprocessed='{self.is_unprocessed}'"
             + f", is_processing_for_data='{self.is_processing_for_data}'"
             + f", is_processed_for_data='{self.is_processed_for_data}'"
             + f", is_processed_success='{self.is_processed_success}'"

@@ -1,10 +1,10 @@
 import threading
 import logging
 from datetime import datetime
-from apps.services.validate_and_move_blobs import check_validate_and_move_blob
+from apps.services.handle_unprocessed_blobs import check_unprocessed_blob_and_move
 
-SCHEDULE_INTERVAL_IN_SECONDS = 4
-JOB_NAME = "DOCUMENT-VALIDATION-JOB"
+SCHEDULE_INTERVAL_IN_SECONDS = 43200
+JOB_NAME = "JOB-HANDLE-UNPROCESSED-BLOB"
 
 
 # function name needs to be job_task for automated picking.
@@ -22,7 +22,7 @@ def job_task():
 
     if start_time.time() <= now <= end_time.time():
         logging.info("Running scheduled job...")
-        check_validate_and_move_blob()
+        check_unprocessed_blob_and_move()
         logging.info("Job is finished")
     else:
         print(f"Scheduled job only runs between {start_time.time()} and {end_time.time()}")

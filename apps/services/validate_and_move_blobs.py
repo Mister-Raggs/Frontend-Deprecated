@@ -73,6 +73,7 @@ def get_list_of_input_blob_from_mongodb() -> List[InputBlob]:
         is_uploaded=True,
         is_processed_for_validation=False,
         is_validation_successful=False,
+        is_unprocessed=False,
         is_processing_for_data=False,
         is_processed_for_data=False,
         is_processed_success=False,
