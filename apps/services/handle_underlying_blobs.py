@@ -6,29 +6,36 @@ from datetime import datetime, timedelta
 from azure.storage.blob import BlobServiceClient
 
 
-def check_unprocessed_blob_and_move():
+def check_underlying_blob_and_move():
     """
     Checks db and move blob that are more than 6hrs old in Azure Blob Storage.
 
     """
     blob_service_client = utils.get_azure_storage_blob_service_client()
-    logging.info("getting list of unprocessed_blobs from Mongodb.")
+    logging.info("getting list of underlying_blobs from Mongodb.")
 
     # Getting the list of blob from Incoming folder
     incoming_input_blob_list = get_list_of_input_blob_from_mongodb_in_incoming()
     if len(incoming_input_blob_list) > 0:
-        logging.info("Total unprocessed input_blobs found in Incoming folder are %s", len(incoming_input_blob_list))
+        logging.info("Total underlying input_blobs found in Incoming folder are %s", len(incoming_input_blob_list))
         for input_blob in incoming_input_blob_list:
             input_blob.incoming_blob_path = input_blob.incoming_blob_path.replace("\\", "/")
-            input_blob.unprocessed_blob_path = input_blob.incoming_blob_path.replace(
-                constants.DEFAULT_INCOMING_SUBFOLDER, constants.DEFAULT_UNPROCESSED_SUBFOLDER
+            input_blob.underlying_blob_path = input_blob.incoming_blob_path.replace(
+                constants.DEFAULT_INCOMING_SUBFOLDER, constants.DEFAULT_UNDERLYING_SUBFOLDER
             )
             input_blob.save()
-            # moving from incoming to unprocessed folder
+            # moving from incoming to underlying folder
             move_blob_from_source_folder_to_destination_folder_in_azure_blob_storage(
-                input_blob.incoming_blob_path, input_blob.unprocessed_blob_path, blob_service_client
+                input_blob.incoming_blob_path, input_blob.underlying_blob_path, blob_service_client
             )
-            input_blob.is_unprocessed = True
+            input_blob.is_underlying = True
+            input_blob.is_active = False
+            processing_lifecycle_status = LifecycleStatus(
+                status=LifecycleStatusTypes.UNDERLYING,
+                message="File is been underlyed by more than 6 hrs.",
+                updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            input_blob.lifecycle_status_list.append(processing_lifecycle_status)
             input_blob.save()
 
     # Getting the list of blob from Validation_Successful folder
@@ -36,19 +43,26 @@ def check_unprocessed_blob_and_move():
     if len(validation_input_blob_list) > 0:
         for input_blob in validation_input_blob_list:
             logging.info(
-                "Total unprocessed input_blobs found in Validation folder are %s", len(validation_input_blob_list)
+                "Total underlying input_blobs found in Validation folder are %s", len(validation_input_blob_list)
             )
 
             input_blob.validation_successful_blob_path = input_blob.validation_successful_blob_path.replace("\\", "/")
-            input_blob.unprocessed_blob_path = input_blob.validation_successful_blob_path.replace(
-                constants.DEFAULT_VALIDATION_SUCCESSFUL_SUBFOLDER, constants.DEFAULT_UNPROCESSED_SUBFOLDER
+            input_blob.underlying_blob_path = input_blob.validation_successful_blob_path.replace(
+                constants.DEFAULT_VALIDATION_SUCCESSFUL_SUBFOLDER, constants.DEFAULT_UNDERLYING_SUBFOLDER
             )
             input_blob.save()
-            # moving from incoming to unprocessed folder
+            # moving from incoming to underlying folder
             move_blob_from_source_folder_to_destination_folder_in_azure_blob_storage(
-                input_blob.validation_successful_blob_path, input_blob.unprocessed_blob_path, blob_service_client
+                input_blob.validation_successful_blob_path, input_blob.underlying_blob_path, blob_service_client
             )
-            input_blob.is_unprocessed = True
+            input_blob.is_underlying = True
+            input_blob.is_active = False
+            processing_lifecycle_status = LifecycleStatus(
+                status=LifecycleStatusTypes.UNDERLYING,
+                message="File is been underlyed by more than 6 hrs.",
+                updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            input_blob.lifecycle_status_list.append(processing_lifecycle_status)
             input_blob.save()
 
 
@@ -58,7 +72,7 @@ def get_list_of_input_blob_from_mongodb_in_incoming() -> List[InputBlob]:
         is_uploaded=True,
         is_processed_for_validation=False,
         is_validation_successful=False,
-        is_unprocessed=False,
+        is_underlying=False,
         is_processing_for_data=False,
         is_processed_for_data=False,
         is_processed_success=False,
@@ -66,7 +80,7 @@ def get_list_of_input_blob_from_mongodb_in_incoming() -> List[InputBlob]:
         date_last_modified__lt=hours_ago,
     )
     if not input_blob_list:
-        logging.info("No Unprocessed_blobs found ")
+        logging.info("No underlying_blobs found in Incoming folder")
 
     return input_blob_list
 
@@ -77,7 +91,7 @@ def get_list_of_input_blob_from_mongodb_in_validation_successful() -> List[Input
         is_uploaded=True,
         is_processed_for_validation=True,
         is_validation_successful=True,
-        is_unprocessed=False,
+        is_underlying=False,
         is_processing_for_data=False,
         is_processed_for_data=False,
         is_processed_success=False,
@@ -85,7 +99,7 @@ def get_list_of_input_blob_from_mongodb_in_validation_successful() -> List[Input
         date_last_modified__lt=hours_ago,
     )
     if not input_blob_list:
-        logging.info("No Unprocessed_blobs found ")
+        logging.info("No underlying_blobs found in Validation-Successful folder. ")
 
     return input_blob_list
 

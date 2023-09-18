@@ -52,7 +52,7 @@ def check_validate_and_move_blob():
             else:
                 logging.info(f"{input_blob.incoming_blob_path} is not valid. Moving to validation failed folder")
                 input_blob.incoming_blob_path = input_blob.incoming_blob_path.replace("\\", "/")
-                input_blob.validation_successful_blob_path = input_blob.incoming_blob_path.replace(
+                input_blob.validation_failed_blob_path = input_blob.incoming_blob_path.replace(
                     constants.DEFAULT_INCOMING_SUBFOLDER, constants.DEFAULT_VALIDATION_FAILED_SUBFOLDER
                 )
                 input_blob.save()
@@ -65,6 +65,7 @@ def check_validate_and_move_blob():
                     updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
                 input_blob.lifecycle_status_list.append(processing_lifecycle_status)
+                input_blob.is_processed_for_validation = True
                 save_input_blob(input_blob)
 
 
@@ -73,7 +74,7 @@ def get_list_of_input_blob_from_mongodb() -> List[InputBlob]:
         is_uploaded=True,
         is_processed_for_validation=False,
         is_validation_successful=False,
-        is_unprocessed=False,
+        is_underlying=False,
         is_processing_for_data=False,
         is_processed_for_data=False,
         is_processed_success=False,

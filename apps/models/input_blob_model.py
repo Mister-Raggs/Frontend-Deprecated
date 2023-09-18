@@ -15,6 +15,7 @@ class LifecycleStatusTypes(str, Enum):
     UPLOADED = "UPLOADED"
     INITIAL_VALIDATING = "INITIAL_VALIDATING"
     INITIAL_VALIDATED = "INITIAL_VALIDATED"
+    UNDERLYING = "UNDERLYING"
     PROCESSING = "PROCESSING"
     PROCESSED = "PROCESSED"
     SUCCESS = "SUCCESS"
@@ -117,8 +118,8 @@ class InputBlob(BaseModel):
     in_progress_blob_sas_url = me.URLField()
     in_progress_blob_url = me.URLField()
 
-    unprocessed_blob_path = me.StringField()
-    unprocessed_blob_url = me.URLField()
+    underlying_blob_path = me.StringField()
+    underlying_blob_url = me.URLField()
 
     success_blob_path = me.StringField()
     success_blob_url = me.URLField()
@@ -136,7 +137,7 @@ class InputBlob(BaseModel):
     is_validation_successful = me.BooleanField(required=True, default=False)
 
     # is_unprocessed mean if file is still unprocessed more than 6 hrs.
-    is_unprocessed = me.BooleanField(required=True, default=False)
+    is_underlying = me.BooleanField(required=True, default=False)
 
     # is_processing_for_data mean backend has moved it to in progress but not processed yet.
     is_processing_for_data = me.BooleanField(required=True, default=False)
@@ -202,8 +203,8 @@ class InputBlob(BaseModel):
             + f", validation_successful_blob_url='{self.validation_successful_blob_url}'"
             + f", in_progress_blob_path='{self.in_progress_blob_path}'"
             + f", in_progress_blob_url='{self.in_progress_blob_url}'"
-            + f", unprocessed_blob_path='{self.unprocessed_blob_path}'"
-            + f", unprocessed_blob_url='{self.unprocessed_blob_url}'"
+            + f", underlying_blob_path='{self.underlying_blob_path}'"
+            + f", underlying_blob_url='{self.underlying_blob_url}'"
             + f", in_progress_blob_sas_url='{self.in_progress_blob_sas_url}'"
             + f", form_recognizer_model_id: {self.form_recognizer_model_id}"
             + f", success_blob_path='{self.success_blob_path}'"
@@ -213,7 +214,7 @@ class InputBlob(BaseModel):
             + f", is_uploaded='{self.is_uploaded}'"
             + f", is_processed_for_validation='{self.is_processed_for_validation}'"
             + f", is_validation_successful='{self.is_validation_successful}'"
-            + f", is_unprocessed='{self.is_unprocessed}'"
+            + f", is_underlying='{self.is_underlying}'"
             + f", is_processing_for_data='{self.is_processing_for_data}'"
             + f", is_processed_for_data='{self.is_processed_for_data}'"
             + f", is_processed_success='{self.is_processed_success}'"

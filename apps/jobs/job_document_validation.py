@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from apps.services.validate_and_move_blobs import check_validate_and_move_blob
 
-SCHEDULE_INTERVAL_IN_SECONDS = 120
+SCHEDULE_INTERVAL_IN_SECONDS = 5
 JOB_NAME = "JOB-DOCUMENT-VALIDATION"
 
 
