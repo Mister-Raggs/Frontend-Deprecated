@@ -3,6 +3,8 @@ import binascii
 from http import HTTPStatus
 import logging
 import os
+import fitz
+from PIL import Image
 from pathlib import Path
 from flask import make_response, session, jsonify
 from flask.wrappers import Request, Response
@@ -17,6 +19,85 @@ from apps.models.user_model import user_loader
 from mongoengine.queryset.visitor import Q
 
 
+def __create_preview_for_image_file(local_file_save_path, filename):
+    local_file_preview_save_path = local_file_save_path.replace(filename, "preview-{}".format(filename))
+    # Define the preview size
+    preview_size = (400, 400)
+    img = Image.open(local_file_save_path)
+    img.thumbnail(preview_size)
+    img.save(local_file_preview_save_path)
+    logging.info("Preview %s is succesfully stored in local file storage", local_file_preview_save_path)
+    return local_file_preview_save_path
+
+
+def __create_preview_for_pdf_file(local_file_save_path, filename):
+    local_file_preview_save_path = local_file_save_path.replace(
+        filename, "preview-{}".format(filename.replace("pdf", "png"))
+    )
+    preview_size = (400, 400)
+
+    # Open the PDF file
+    doc = fitz.open(local_file_save_path)
+    # Get the dimensions of the first page
+    rect = doc[0].rect
+    # Check the number of pages in the PDF
+    if len(doc) == 1:
+        # If there is only one page, create a new PDF with the same width and height as the original page
+        new_page_rect = fitz.Rect(0, 0, rect.width, rect.height)
+
+        pdf_writer = fitz.open()
+        new_page = pdf_writer.new_page(width=new_page_rect.width, height=new_page_rect.height)
+
+        # Insert the first page into the new page
+        new_page.show_pdf_page(fitz.Rect(0, 0, rect.width, rect.height), doc, 0)
+
+    elif len(doc) > 1:
+        # If there are multiple pages, create a new PDF with double the width to accommodate both pages
+        new_page_rect = fitz.Rect(0, 0, rect.width * 2, rect.height)
+
+        # Create a new PDF page with the calculated dimensions
+        pdf_writer = fitz.open()
+        new_page = pdf_writer.new_page(width=new_page_rect.width, height=new_page_rect.height)
+
+        # Insert the first page into the new page
+        new_page.show_pdf_page(fitz.Rect(0, 0, rect.width, rect.height), doc, 0)
+
+        # If there is more than one page, insert the second page into the new page
+
+        new_page.show_pdf_page(fitz.Rect(rect.width, 0, rect.width * 2, rect.height), doc, 1)
+
+    pix = new_page.get_pixmap()
+    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    img.thumbnail(preview_size)
+    img.save(local_file_preview_save_path)
+    logging.info("Preview %s is succesfully stored in local file storage", local_file_preview_save_path)
+
+    return local_file_preview_save_path
+
+
+def __upload_preview_file_to_azure_storage(
+    preivew_blob_path, local_file_preview_save_path, blob_service_client: BlobServiceClient
+):
+    try:
+        blob_client = blob_service_client.get_blob_client(
+            container=constants.DEFAULT_BLOB_CONTAINER, blob=preivew_blob_path
+        )
+        # infer file mime type and set it to upload
+        file_type = utils.get_file_mime_type(local_file_preview_save_path)
+        content_settings = ContentSettings(content_type=file_type)
+        logging.info("File '%s' content type inferred as '%s'", local_file_preview_save_path, file_type)
+        with open(file=local_file_preview_save_path, mode="rb") as data:
+            blob_client.upload_blob(data=data, overwrite=False, content_settings=content_settings)
+
+        return True
+    except:
+        logging.exception("Failed to save Blob resource '%s' to blob storage.", preivew_blob_path)
+        # cleanup from local file storage in any case
+        __cleanup_local_file_storage(local_file_preview_save_path)
+
+        return False
+
+
 def __blob_exists(blob_client, blob_path):
     try:
         blob_client.get_blob_properties()
@@ -26,7 +107,7 @@ def __blob_exists(blob_client, blob_path):
 
 
 def __get_local_file_save_path(filename):
-    local_save_folder = config_reader.config_data.get("Main", "app_base_dir") + "/uploaded_file_storage/"
+    local_save_folder = config_reader.config_data.get("Main", "app_base_dir") + "\\uploaded_file_storage\\"
     local_file_name = f"user_{session.get(constants.SESSION_USER_ROW_ID_KEY)}_{filename}"
     local_file_save_path = os.path.join(
         local_save_folder,
@@ -259,6 +340,32 @@ def handle_document_upload(request: Request) -> Response:
                 if response:
                     return response
 
+                # Generating preview for file
+                preview_response = False
+                try:
+                    if ".pdf" in filename:
+                        preivew_file_local_save_path = __create_preview_for_pdf_file(local_file_save_path, filename)
+                        preview_blob_path = os.path.join(
+                            blob_folder_name,
+                            constants.PREVIEW_FILES_FOLDER,
+                            "preview-{}".format(filename.replace("pdf", "png")),
+                        )
+                        preview_response = __upload_preview_file_to_azure_storage(
+                            preview_blob_path, preivew_file_local_save_path, blob_service_client
+                        )
+
+                    elif "jpg" in filename or "jpeg" in filename or "png" in filename:
+                        preivew_file_local_save_path = __create_preview_for_image_file(local_file_save_path, filename)
+                        preview_blob_path = os.path.join(
+                            blob_folder_name, constants.PREVIEW_FILES_FOLDER, "preview-{}".format(filename)
+                        )
+                        preview_response = __upload_preview_file_to_azure_storage(
+                            preview_blob_path, preivew_file_local_save_path, blob_service_client
+                        )
+
+                except:
+                    logging.error("An error occured while generating preview")
+
                 # ------------------------------------------------------
                 # Step 6 - check the MD5 has of the uploaded blob. Calculate MD5 of local file and match that to what we get in blob properties.
                 if __check_if_md5_hash_match(blob_client, local_file_save_path, filename):
@@ -280,6 +387,17 @@ def handle_document_upload(request: Request) -> Response:
                     )
                     return make_response("File Blob MD5 hashes dont match.", HTTPStatus.INTERNAL_SERVER_ERROR)
 
+                # ----------------------------------------------------------
+                # preview save_input_blob_to_db_and_cleanup_local_storage
+                if preview_response:
+                    input_blob: InputBlob = InputBlob.objects(incoming_blob_path=blob_path).first()
+                    input_blob.preview_blob_path = preview_blob_path
+                    input_blob.save()
+
+                    if os.path.exists(preivew_file_local_save_path):
+                        __cleanup_local_file_storage(preivew_file_local_save_path)
+
+                # ----------------------------------------------------------
         return make_response("Chunk upload successful", 200)
     else:
         msg = "Improper or incomplete request received. Either filename or the file data is missing."

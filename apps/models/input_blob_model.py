@@ -107,7 +107,9 @@ class InputBlob(BaseModel):
 
     incoming_blob_path = me.StringField(required=True)
     incoming_blob_url = me.URLField(required=True)
-
+    
+    preview_blob_path = me.StringField()
+    
     validation_failed_blob_path = me.StringField()
     validation_failed_blob_url = me.URLField()
 
