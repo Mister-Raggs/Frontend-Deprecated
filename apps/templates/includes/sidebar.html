@@ -108,12 +108,18 @@
         </li>
         <li class="nav-item">
           <a href="/citadel/list_all_documents"
-            class="nav-link {% if '/citadel/list_all_documents' in segment %} active {% endif %}">
-            <i class="fas fa-archive nav-icon"></i>
+            class="nav-link {% if 'list_all_documents' in segment %} active {% endif %}">
+            <i class="fas fa-list-ol nav-icon"></i>
             <p>List All Documents</p>
           </a>
         </li>
-
+        <li class="nav-item">
+          <a href="/citadel/underlying_documents"
+            class="nav-link {% if 'underlying_documents' in segment %} active {% endif %}">
+            <i class="fas fa-list-ol nav-icon"></i>
+            <p>Underlying Documents</p>
+          </a>
+        </li>
         <li class="nav-header">OTHERS</li>
         <li class="nav-item has-treeview {% if 'index' in segment %} menu-open {% endif %}">
           <a href="#" class="nav-link {% if 'index' in segment %} active {% endif %}">

@@ -29,6 +29,8 @@ $(function () {
         }
         return data.document_name;
     }
+
+
     function handle_activate_delete_toggle_button_action($button, $dataTable, $action) {
         row_id = get_dt_row_id($button, $dataTable)
         document_name = get_document_name($button, $dataTable)
@@ -80,7 +82,7 @@ $(function () {
             { data: 'document_type_size' },
             { data: 'created_date' },
             { data: 'last_modified_date' },
-            { data: 'status' },
+            { data: 'latest_status' },
             { data: 'is_active' },
             {
                 data: null,
@@ -112,6 +114,7 @@ $(function () {
                         '           <i class="fa fa-info-circle"></i>' +
                         '       </button>' +
                         '       &nbsp;&nbsp;'
+                    $button_group += '   </button>'
 
                     return $button_group;
                 },
@@ -154,8 +157,10 @@ $(function () {
     $('#documents_list_table tbody').on('click', 'button#is-active-toggle-button', function () {
         handle_activate_delete_toggle_button_action($(this), $dtable, "is_active",)
     });
+
     // enable tooltips on action buttons
     $('[data-toggle="tooltip"]').tooltip();
+
     $('.toastsDefaultAutohide').click(function () {
         $(document).Toasts('create', {
             title: 'Toast Title',

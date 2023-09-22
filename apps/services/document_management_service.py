@@ -11,7 +11,12 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from azure.storage.blob import BlobClient, ContentSettings, BlobServiceClient
 from azure.core.exceptions import ServiceRequestError
-from apps.common.custom_exceptions import DocumentManagementException, DocumentNotFoundException, CitadelIDPWebException
+from apps.common.custom_exceptions import (
+    DocumentManagementException,
+    DocumentNotFoundException,
+    CitadelIDPWebException,
+    DocumentNotFoundException,
+)
 from apps.models.input_blob_model import InputBlob, LifecycleStatus, LifecycleStatusTypes, MetaData
 from apps.models.user_model import user_loader
 from mongoengine.queryset.visitor import Q
@@ -355,7 +360,64 @@ def prepare_document_list_data(draw, search_value, start_index, page_length):
                 "document_type_size": document_type_size,
                 "created_date": document.date_created,
                 "last_modified_date": document.date_last_modified,
-                "status": final_status,
+                "latest_status": final_status,
+                "is_active": "Yes" if (document.is_active) else "No",
+            }
+        )
+    response = {
+        "draw": draw,
+        "recordsFiltered": records_filtered,
+        "recordsTotal": records_total,
+        "data": response_data,
+    }
+    # logging.info("response -> %s", response)
+    return jsonify(response)
+
+
+# prepare the data for list all underlying documents uploaded.
+def prepare_list_underlying_data(draw, search_value, start_index, page_length):
+    """
+    prepare_underlying_document_list_data _summary_
+    Args:
+        draw (_type_): _description_
+        search_value (_type_): _description_
+        page_start (int): zero based page number. i.e. page 0 means its page 1
+        page_length (int): number of records to fetch per page.
+    """
+    end_index = start_index + page_length
+    document_data = None
+    records_total = InputBlob.objects(is_underlying=True, is_active=False).count()
+    records_filtered = records_total
+    if utils.string_is_not_empty(search_value):
+        document_data = InputBlob.objects(
+            (Q(is_underlying=True) & Q(is_active=False) & Q(blob_name__icontains=search_value))
+        )[start_index:end_index]
+        # get the count of records also
+        records_filtered = InputBlob.objects(
+            (Q(is_underlying=True) & Q(is_active=False) & Q(blob_name__icontains=search_value))
+        ).count()
+    else:
+        document_data = InputBlob.objects(Q(is_underlying=True) & Q(is_active=False))[start_index:end_index]
+    # logging.info(document_data)
+    response_data = []
+    for document in document_data:
+        size_in_mb = document.metadata.content_length_bytes / (1024 * 1024)
+        document_type_size = f"{size_in_mb:.2f} MB, {document.metadata.content_type}"
+        user_full_name = f" {document.uploader_user.first_name}"
+        if utils.string_is_not_empty(document.uploader_user.middle_name):
+            user_full_name += f" {document.uploader_user.middle_name}"
+        user_full_name += f"{document.uploader_user.last_name}"
+        last_status = document.lifecycle_status_list[-1]
+        final_status = f"{last_status.status.name} , {last_status.updated_date_time}"
+        response_data.append(
+            {
+                "DT_RowId": str(document.pk),
+                "document_name": document.blob_name,
+                "uploaded_by": user_full_name,
+                "document_type_size": document_type_size,
+                "created_date": document.date_created,
+                "last_modified_date": document.date_last_modified,
+                "latest_status": final_status,
                 "is_active": "Yes" if (document.is_active) else "No",
             }
         )
