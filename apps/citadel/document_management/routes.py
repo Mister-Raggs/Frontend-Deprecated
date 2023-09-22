@@ -18,6 +18,7 @@ from mongoengine.errors import ValidationError
 # APIs from here - these have /api prefixes
 ##########################################################################################
 
+
 @blueprint.route("/api/get_list_document_data", methods=["POST"])
 @login_required
 def api_get_document_data():
@@ -51,9 +52,26 @@ def toggle_document_status():
     return make_response("Success, 200")
 
 
+@blueprint.route("/api/get_list_underlying_data", methods=["POST"])
+@login_required
+def api_get_list_underlying_data():
+    # Detect the current page
+    segment = utils.get_segment(request)
+    # logging.info("Request form is: %s", request.form)
+    draw = request.form["draw"]
+    page_number = int(request.form["start"])
+    length = int(request.form["length"])
+    search_value = request.form["search[value]"]
+    # TODO: validate the request params
+    response = document_management_service.prepare_list_underlying_data(draw, search_value, page_number, length)
+    # logging.info("response is -> %s", response)
+    return make_response(response, 200)
+
+
 ##########################################################################################
 # Action routes from here
 ##########################################################################################
+
 
 @blueprint.route(
     "/document_upload",
@@ -77,6 +95,7 @@ def document_upload_page():
         max_parallel_file_uploads_allowed=constants.MAX_PARALLEL_FILE_UPLOADS_ALLOWED,
         max_allowed_file_uploads_on_one_page=constants.MAX_ALLOWED_FILE_UPLOADS_ON_ONE_PAGE,
     )
+
 
 @blueprint.route("/receive_document_upload", methods=["POST"])
 @login_required
@@ -105,7 +124,9 @@ def receive_document_upload():
         return render_template("home/page-404.html"), HTTPStatus.NOT_FOUND
 
 
-@blueprint.route( "/list_all_documents",)
+@blueprint.route(
+    "/list_all_documents",
+)
 @login_required
 def show_list_all_documents():
     segment = utils.get_segment(request)
@@ -117,3 +138,15 @@ def show_list_all_documents():
     return render_template("citadel/list_all_documents.html", segment=segment)
 
 
+@blueprint.route(
+    "/underlying_documents",
+)
+@login_required
+def show_list_underlying_documents():
+    segment = utils.get_segment(request)
+    """
+    show_underlying_documents _summary_
+    Returns:
+        _type_: _description_
+    """
+    return render_template("citadel/underlying_documents.html", segment=segment)
