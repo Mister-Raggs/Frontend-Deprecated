@@ -29,6 +29,19 @@ $(function () {
         }
         return data.document_name;
     }
+
+    function handle_preview_document_action($button, $dataTable) {
+        // Get the row ID and document name from the DataTable
+        var row_id = get_dt_row_id($button, $dataTable);
+        var document_name = get_document_name($button, $dataTable);
+
+        // Log the Preview action    
+        console.log("Preview action triggered for row id: " + row_id);
+        window.open('/citadel/api/document_preview?document_id=' + row_id, '_blank')
+
+    }
+
+
     function handle_activate_delete_toggle_button_action($button, $dataTable, $action) {
         row_id = get_dt_row_id($button, $dataTable)
         document_name = get_document_name($button, $dataTable)
@@ -153,6 +166,10 @@ $(function () {
     // handle the activate/deactivate button click
     $('#documents_list_table tbody').on('click', 'button#is-active-toggle-button', function () {
         handle_activate_delete_toggle_button_action($(this), $dtable, "is_active",)
+    });
+    //handle document preview button click
+    $('#documents_list_table tbody').on('click', 'button#row-preview-button', function () {
+        handle_preview_document_action($(this), $dtable, "document_name",)
     });
     // enable tooltips on action buttons
     $('[data-toggle="tooltip"]').tooltip();

@@ -485,3 +485,23 @@ def prepare_document_list_data(draw, search_value, start_index, page_length):
     }
     # logging.info("response -> %s", response)
     return jsonify(response)
+
+
+# Function for showing preview of blobs.
+def handle_document_preview(document_id):
+    document = InputBlob.objects(pk=document_id).first()
+    if document:
+        try:
+            blob_path = document.preview_blob_path
+            blob_path = blob_path.replace("\\", "/")
+            blob_service_client = utils.get_azure_storage_blob_service_client()
+            blob_client = blob_service_client.get_blob_client(
+                container=constants.DEFAULT_BLOB_CONTAINER, blob=blob_path
+            )
+            stream = blob_client.download_blob()
+            return Response(stream.readall(), mimetype="image/png")
+
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Error fetching document: {str(e)}"}), 500
+
+    return jsonify({"status": "error", "message": "Document not found"}), 404

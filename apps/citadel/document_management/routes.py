@@ -4,7 +4,7 @@ Copyright (c) 2019 - present AppSeed.us
 """
 from http import HTTPStatus
 import logging
-from flask import render_template, make_response, request
+from flask import render_template, make_response, request, send_file
 from apps.citadel.document_management import blueprint
 from flask_login import login_required
 from apps.common import constants, utils
@@ -17,6 +17,7 @@ from mongoengine.errors import ValidationError
 ##########################################################################################
 # APIs from here - these have /api prefixes
 ##########################################################################################
+
 
 @blueprint.route("/api/get_list_document_data", methods=["POST"])
 @login_required
@@ -34,7 +35,7 @@ def api_get_document_data():
     return make_response(response, 200)
 
 
-@blueprint.route("/api/document_toggle_activate_delete", methods=["POST"])
+@blueprint.route("/api/document_toggle_activate_delete", methods=["POST", "GET"])
 @login_required
 def toggle_document_status():
     document_id = request.form["document_id"]
@@ -51,9 +52,30 @@ def toggle_document_status():
     return make_response("Success, 200")
 
 
+@blueprint.route("/api/document_preview", methods=["GET"])
+@login_required
+def handle_preview_document_action():
+    try:
+        document_id = request.args.get("document_id")
+
+        if not document_id:
+            return make_response("Missing document_id parameter.", 400)
+
+        preview_image_base64 = document_management_service.handle_document_preview(document_id)
+        if preview_image_base64:
+            return preview_image_base64
+        else:
+            return make_response("Preview image not available.", 404)
+    except Exception as e:
+        msg = f"Error generating document preview: {str(e)}"
+        logging.exception(msg)
+        return make_response(msg, 500)
+
+
 ##########################################################################################
 # Action routes from here
 ##########################################################################################
+
 
 @blueprint.route(
     "/document_upload",
@@ -77,6 +99,7 @@ def document_upload_page():
         max_parallel_file_uploads_allowed=constants.MAX_PARALLEL_FILE_UPLOADS_ALLOWED,
         max_allowed_file_uploads_on_one_page=constants.MAX_ALLOWED_FILE_UPLOADS_ON_ONE_PAGE,
     )
+
 
 @blueprint.route("/receive_document_upload", methods=["POST"])
 @login_required
@@ -105,7 +128,9 @@ def receive_document_upload():
         return render_template("home/page-404.html"), HTTPStatus.NOT_FOUND
 
 
-@blueprint.route( "/list_all_documents",)
+@blueprint.route(
+    "/list_all_documents",
+)
 @login_required
 def show_list_all_documents():
     segment = utils.get_segment(request)
@@ -115,5 +140,3 @@ def show_list_all_documents():
         _type_: _description_
     """
     return render_template("citadel/list_all_documents.html", segment=segment)
-
-
