@@ -10,6 +10,7 @@ VALIDATION_SUCCESSFUL_SUBFOLDER = "/Validation-Successful"
 MONGODB_CONN_ALIAS = "citadel_frontend_app"
 DEFAULT_BLOB_CONTAINER = "aarkglobal"
 INCOMING_FILES_FOLDER = "Incoming-Files"
+PREVIEW_FILES_FOLDER = "Preview"
 
 # session value keys
 SESSION_USER_ROW_ID_KEY = "user_row_id"

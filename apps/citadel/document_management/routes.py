@@ -35,7 +35,7 @@ def api_get_document_data():
     return make_response(response, 200)
 
 
-@blueprint.route("/api/document_toggle_activate_delete", methods=["POST"])
+@blueprint.route("/api/document_toggle_activate_delete", methods=["POST", "GET"])
 @login_required
 def toggle_document_status():
     document_id = request.form["document_id"]
@@ -66,6 +66,30 @@ def api_get_list_underlying_data():
     response = document_management_service.prepare_list_underlying_data(draw, search_value, page_number, length)
     # logging.info("response is -> %s", response)
     return make_response(response, 200)
+
+
+
+
+
+@blueprint.route("/api/document_preview", methods=["GET"])
+@login_required
+def api_handle_preview_document_action():
+    try:
+        document_id = request.args.get("document_id")
+
+        if not document_id:
+            return make_response("Missing document_id parameter.", 400)
+
+        preview_image_base64 = document_management_service.handle_document_preview(document_id)
+        if preview_image_base64:
+            return preview_image_base64
+        else:
+            return make_response("Preview image not available.", 404)
+    except Exception as e:
+        msg = f"Error generating document preview: {str(e)}"
+        logging.exception(msg)
+        return make_response(msg, 500)
+
 
 
 ##########################################################################################
