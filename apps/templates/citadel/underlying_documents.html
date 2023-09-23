@@ -1,13 +1,9 @@
 {% extends "layouts/base.html" %}
-
 {% block title %} List All Files {% endblock %}
-
 <!-- Element injected in the BODY element -->
 {% block body_class %} sidebar-mini pace-primary {% endblock body_class %}
-
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
-
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <!-- Font Awesome -->
@@ -23,6 +19,7 @@
         width: 65%;
     }
 </style>
+
 {% endblock stylesheets %}
 <!-- ======================================================================== -->
 {% block content %}
@@ -32,13 +29,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>All Documents Uploaded</h1>
+                    <h1>Underlying Documents </h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="#">Home</a></li>
                         <li class="breadcrumb-item"><a href="#">Citadel</a></li>
-                        <li class="breadcrumb-item active">List All Documents</li>
+                        <li class="breadcrumb-item active">Underlying Documents</li>
                     </ol>
                 </div>
             </div>
@@ -52,7 +49,7 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header ">
-                            <h3 class="card-title">List of all saved
+                            <h3 class="card-title">List of all Underlying
                                 Documents</h3>
                             &nbsp;&nbsp;&nbsp;
                             <!-- <button id="rightSidebarToggle" class="btn btn-primary">Toggle Right
@@ -64,7 +61,8 @@
                         </div>
                         <!-- /.card-header -->
                         <div class="card-body">
-                            <table id="documents_list_table" class="table table-bordered table-striped table-hover">
+                            <table id="underlying_documents_list_table"
+                                class="table table-bordered table-striped table-hover">
                                 <thead>
                                     <tr>
                                         <th>Document Name</th>
@@ -74,7 +72,7 @@
                                         <th>Last Modified Date</th>
                                         <th>Latest Status</th>
                                         <th>Active?</th>
-                                        <th>Actions</th>
+                                        <th class="action-column">Actions</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -114,5 +112,5 @@
 <script src="/static/assets/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->
 <!-- <script src="/static/assets/js/demo.js"></script> -->
-<script src="/static/assets/js/citadel/list_all_documents.js"></script>
+<script src="/static/assets/js/citadel/underlying_documents.js"></script>
 {% endblock javascripts %}
