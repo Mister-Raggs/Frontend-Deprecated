@@ -4,7 +4,7 @@ Copyright (c) 2019 - present AppSeed.us
 """
 from http import HTTPStatus
 import logging
-from flask import render_template, make_response, request, send_file
+from flask import render_template, make_response, request
 from apps.citadel.document_management import blueprint
 from flask_login import login_required
 from apps.common import constants, utils
