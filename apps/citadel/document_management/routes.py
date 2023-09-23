@@ -52,9 +52,45 @@ def toggle_document_status():
     return make_response("Success, 200")
 
 
+@blueprint.route("/api/get_list_underlying_data", methods=["POST"])
+@login_required
+def api_get_list_underlying_data():
+    # Detect the current page
+    segment = utils.get_segment(request)
+    # logging.info("Request form is: %s", request.form)
+    draw = request.form["draw"]
+    page_number = int(request.form["start"])
+    length = int(request.form["length"])
+    search_value = request.form["search[value]"]
+    # TODO: validate the request params
+    response = document_management_service.prepare_list_underlying_data(draw, search_value, page_number, length)
+    # logging.info("response is -> %s", response)
+    return make_response(response, 200)
+
+
 @blueprint.route("/api/document_preview", methods=["GET"])
 @login_required
 def handle_preview_document_action():
+    try:
+        document_id = request.args.get("document_id")
+
+        if not document_id:
+            return make_response("Missing document_id parameter.", 400)
+
+        preview_image_base64 = document_management_service.handle_document_preview(document_id)
+        if preview_image_base64:
+            return preview_image_base64
+        else:
+            return make_response("Preview image not available.", 404)
+    except Exception as e:
+        msg = f"Error generating document preview: {str(e)}"
+        logging.exception(msg)
+        return make_response(msg, 500)
+
+
+@blueprint.route("/api/document_preview", methods=["GET"])
+@login_required
+def api_handle_preview_document_action():
     try:
         document_id = request.args.get("document_id")
 
@@ -140,3 +176,17 @@ def show_list_all_documents():
         _type_: _description_
     """
     return render_template("citadel/list_all_documents.html", segment=segment)
+
+
+@blueprint.route(
+    "/underlying_documents",
+)
+@login_required
+def show_list_underlying_documents():
+    segment = utils.get_segment(request)
+    """
+    show_underlying_documents _summary_
+    Returns:
+        _type_: _description_
+    """
+    return render_template("citadel/underlying_documents.html", segment=segment)
