@@ -20,6 +20,10 @@ class MissingDocumentTypeException(CitadelIDPWebException):
     Exception to be raised when document type cannot be inferred from file name.
     """
 
+class MissingBlobException(CitadelIDPWebException):
+    """
+    exception to be raised when blob is missing from azure storage
+    """
 
 class DocumentManagementException(CitadelIDPWebException):
     """

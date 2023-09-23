@@ -2,6 +2,7 @@ from enum import Enum
 import mongoengine as me
 from mongoengine.queryset.visitor import Q
 from flask_login import UserMixin
+
 from apps import login_manager
 from apps.models.base_model import BaseModel
 from apps.models.company_model import CompanyModel

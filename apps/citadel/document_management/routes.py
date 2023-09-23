@@ -5,19 +5,34 @@ Copyright (c) 2019 - present AppSeed.us
 from http import HTTPStatus
 import logging
 from flask import render_template, make_response, request
-from apps.citadel.document_management import blueprint
+from mongoengine.errors import ValidationError
 from flask_login import login_required
+
+from apps.citadel.document_management import blueprint
 from apps.common import constants, utils
 from apps.models.input_blob_model import InputBlob
 from apps.services import document_management_service
 from apps.common.custom_exceptions import DocumentNotFoundException, CitadelIDPWebException
-from mongoengine.errors import ValidationError
 
 
 ##########################################################################################
 # APIs from here - these have /api prefixes
 ##########################################################################################
 
+@blueprint.route("/api/download_document", methods=["POST"])
+@login_required
+def api_download_document():
+    document_id = request.form.get("document_id")
+    action = request.form.get("action")
+    try:
+        response_data=document_management_service.handle_document_download(document_id=document_id)
+        if response_data:  
+            return make_response(response_data,200)
+        else:
+            make_response("download not available.",400)
+    except Exception as e:        
+        logging.exception("error : %s ",e)
+        return str(e), 404
 
 @blueprint.route("/api/get_list_document_data", methods=["POST"])
 @login_required

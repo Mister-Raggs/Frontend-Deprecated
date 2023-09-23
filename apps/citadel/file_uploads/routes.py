@@ -4,9 +4,9 @@ Copyright (c) 2019 - present AppSeed.us
 """
 import logging
 from flask import render_template, make_response, request
-from apps.citadel.file_uploads import blueprint
 from flask_login import login_required
 
+from apps.citadel.file_uploads import blueprint
 from apps.services import file_upload_handler
 
 

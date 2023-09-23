@@ -4,14 +4,15 @@ Copyright (c) 2019 - present AppSeed.us
 """
 import logging
 from flask import make_response, render_template, request, redirect, url_for, flash
-from apps.citadel.user_management import blueprint
-from apps.citadel.user_management.forms import AddUpdateUserForm
+from mongoengine.errors import ValidationError
 from flask_login import login_required
+
 from apps.common import utils
 from apps.common.custom_exceptions import CitadelIDPWebException, UserSaveException, CompanyNotFoundException
 from apps.services import user_management_service
 from apps.models.company_model import CompanyModel
-from mongoengine.errors import ValidationError
+from apps.citadel.user_management import blueprint
+from apps.citadel.user_management.forms import AddUpdateUserForm
 
 
 ##########################################################################################

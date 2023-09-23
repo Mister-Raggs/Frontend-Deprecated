@@ -29,8 +29,6 @@ $(function () {
         }
         return data.document_name;
     }
-
-
     function handle_preview_document_action($button, $dataTable) {
         // Get the row ID and document name from the DataTable
         var row_id = get_dt_row_id($button, $dataTable);
@@ -41,9 +39,39 @@ $(function () {
         window.open('/citadel/api/document_preview?document_id=' + row_id, '_blank')
 
     }
-
-
-
+    function handleDownloadButtonClick(rowId, action, documentName) {
+        console.log("Download triggered for document id: " + rowId);
+    
+        // Send a POST request to the server to initiate the download
+        $.ajax({
+            url: "/citadel/api/download_document",
+            method: "POST",
+            data: {
+                document_id: rowId, // Use rowId parameter
+                action: action,     // Use action parameter
+            },
+            xhrFields: {
+                responseType: "blob",
+            },
+            success: function (data, status, xhr) {
+                // Once the POST request is successful, initiate the download
+                var blobData = data; // The response data is already a Blob
+                var blobUrl = window.URL.createObjectURL(blobData);
+                // Create a popup window with the download prompt
+                var a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.setAttribute('download', documentName); // Use the provided documentName
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+            },
+            error: function (xhr, status, error) {
+                show_toast_notification("error", "Error!", "Download failed for document '" + documentName + "'.<br />Error from server is: " + xhr.statusText);
+            },
+        });
+    }
     function handle_activate_delete_toggle_button_action($button, $dataTable, $action) {
         row_id = get_dt_row_id($button, $dataTable)
         document_name = get_document_name($button, $dataTable)
@@ -129,7 +157,14 @@ $(function () {
                         '       &nbsp;&nbsp;'
                     $button_group += '   </button>'
 
+                    //download button
+                    $button_group += '<button type="button" id="download-button" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Click to download this document">' +
+                        '<i class="fa fa-download"></i>' +
+                        '</button>&nbsp;&nbsp;' +
+                        '</div>';
+                    $button_group += '   </button>'
                     return $button_group;
+
                 },
             },
 
@@ -171,12 +206,18 @@ $(function () {
         handle_activate_delete_toggle_button_action($(this), $dtable, "is_active",)
     });
 
-
     //handle document preview button click
     $('#documents_list_table tbody').on('click', 'button#row-preview-button', function () {
         handle_preview_document_action($(this), $dtable, "document_name",)
     });
 
+    // handle download button
+    $('#documents_list_table tbody').on('click', 'button#download-button', function () {
+        var rowId = get_dt_row_id($(this), $dtable);
+        var documentName = get_document_name($(this), $dtable);
+        var action = 'download'; // Assuming the action is 'download', adjust as necessary
+        handleDownloadButtonClick(rowId, action, documentName);
+    });
 
     // enable tooltips on action buttons
     $('[data-toggle="tooltip"]').tooltip();
