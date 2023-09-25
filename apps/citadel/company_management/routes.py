@@ -3,17 +3,17 @@
 Copyright (c) 2019 - present AppSeed.us
 """
 import logging
+from mongoengine.errors import ValidationError
 from flask import make_response, render_template, request, redirect, url_for, flash
-from apps.citadel.company_management import blueprint
-from apps.citadel.company_management.forms import AddUpdateCompanyForm
 from flask_login import login_required
+
 from apps.common import utils
 from apps.models.company_model import AddressCountry
 from apps.services import company_management_service
 from apps.common.custom_exceptions import CitadelIDPWebException, CompanyNotFoundException
 from apps.services import company_management_service
-from mongoengine.errors import ValidationError
-
+from apps.citadel.company_management import blueprint
+from apps.citadel.company_management.forms import AddUpdateCompanyForm
 
 ##########################################################################################
 # APIs from here - these have /api prefixes

@@ -1,7 +1,8 @@
-from apps.common import constants
-from apps.models.base_model import BaseModel
 import mongoengine as me
 from enum import Enum
+
+from apps.common import constants
+from apps.models.base_model import BaseModel
 from apps.models.company_model import CompanyModel
 from apps.models.user_model import UserModel
 

@@ -1,10 +1,10 @@
 from importlib import import_module
 import os, logging
 from pathlib import Path
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from apps.common import config_reader
 from apps.jobs import app_jobs_scheduler
-from apscheduler.schedulers.background import BackgroundScheduler
 
 
 def collect_and_schedule_jobs() -> BackgroundScheduler:

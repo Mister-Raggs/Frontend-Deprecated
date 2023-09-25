@@ -1,6 +1,7 @@
 import threading
 import logging
 from datetime import datetime
+
 from apps.services.handle_underlying_blobs import check_underlying_blob_and_move
 
 SCHEDULE_INTERVAL_IN_SECONDS = 5

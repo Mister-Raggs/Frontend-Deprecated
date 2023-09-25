@@ -2,6 +2,7 @@ import re
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, HiddenField, EmailField, PasswordField
 from wtforms.validators import DataRequired, Email
+
 from apps.common import utils
 
 

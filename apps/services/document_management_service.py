@@ -2,26 +2,93 @@ import base64
 import binascii
 from http import HTTPStatus
 import logging
+import  time
 import os
 import fitz
 from PIL import Image
 from pathlib import Path
-from flask import make_response, session, jsonify
+from flask import make_response, session, jsonify,send_file
 from flask.wrappers import Request, Response
-from apps.common import config_reader, constants, utils
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
+from mongoengine.queryset.visitor import Q
 from azure.storage.blob import BlobClient, ContentSettings, BlobServiceClient
 from azure.core.exceptions import ServiceRequestError
+
+from apps.common import config_reader, constants, utils
 from apps.common.custom_exceptions import (
     DocumentManagementException,
     DocumentNotFoundException,
     CitadelIDPWebException,
     DocumentNotFoundException,
+    MissingBlobException,
 )
 from apps.models.input_blob_model import InputBlob, LifecycleStatus, LifecycleStatusTypes, MetaData
 from apps.models.user_model import user_loader
-from mongoengine.queryset.visitor import Q
+
+def get_latest_blob_residing_path_in_azure(document:InputBlob):
+        # checking if blob is moving 
+        if document.lifecycle_status_list[-1].status==LifecycleStatusTypes.INITIAL_VALIDATING or document.lifecycle_status_list[-1].status==LifecycleStatusTypes.PROCESSING:
+            #returned None cause blob might be moving
+             return 
+        #if lying in Incoming Folder
+        elif document.lifecycle_status_list[-1].status==LifecycleStatusTypes.UPLOADED and not document.is_processed_for_validation:
+            if document.incoming_blob_path:
+                path=document.incoming_blob_path
+                return path
+        #if lying in Validation Successful folder 
+        elif document.lifecycle_status_list[-1].status==LifecycleStatusTypes.INITIAL_VALIDATED and not document.is_processing_for_data:
+            if document.validation_successful_blob_path:
+                path=document.validation_successful_blob_path
+                return path
+        #if lying in in progress folder
+        elif document.lifecycle_status_list[-1].status==LifecycleStatusTypes.PROCESSED and not(document.is_processed_success) and not(document.is_processed_failed):
+                # this is because some problem encountered in moving blob from inprogress to failed or succesful(meaning if blob strucked in inprogress folder)
+                path=document.in_progress_blob_path
+                return path
+        #if lying in succesful folder
+        elif document.lifecycle_status_list[-1].status==LifecycleStatusTypes.SUCCESS:
+            if document.success_blob_path:
+                path=document.success_blob_path
+                return path
+        #if lying in failed folder
+        elif document.lifecycle_status_list[-1].status==LifecycleStatusTypes.FAILED:
+                path=document.failed_blob_path
+                return path
+        #if lying in underlying folder
+        elif document.lifecycle_status_list[-1].status==LifecycleStatusTypes.UNDERLYING:
+            if document.underlying_blob_path:
+                path=document.underlying_blob_path
+                return path
+                 
+# without utilizing local storage 
+def handle_document_download(document_id):
+    start_time=time.time()
+    span_time_in_sec=2
+    while True:
+        document:InputBlob = InputBlob.objects(pk=document_id).first()
+        if not document:
+            msg=f"document not found for document id:{document_id}"
+            raise DocumentNotFoundException(msg)
+        blob_path=get_latest_blob_residing_path_in_azure(document)
+        if blob_path:
+            blob_client = utils.get_azure_storage_blob_service_client().get_blob_client(
+            container=constants.DEFAULT_BLOB_CONTAINER, blob=blob_path
+            )
+            if blob_client.exists():
+                try:
+                    download_stream = blob_client.download_blob()
+                    content_type=document.metadata.content_type
+                    return Response(download_stream.readall(), mimetype=content_type)
+                except Exception as e:
+                    logging.exception("Exception : %s ,on user clicking download button,blob is moving ",e)
+        if time.time()>start_time+span_time_in_sec:
+            #logically there are  only two possiblities: 
+            # 1) blob does not found in  azure storage and its instance is in DB 
+            # 2) or if searching time of code for blob in azure storage takes more than the span time , though blob might be existing in storage.
+            # logging.error("blob  not found in azure storage but it's instance is in DB  with document_id: %s",document_id)
+            msg=f"blob  not found in azure storage but it's instance is in DB  with document_id: {document_id}"
+            raise MissingBlobException(msg)
 
 
 def __create_preview_for_image_file(local_file_save_path, filename):
@@ -78,6 +145,7 @@ def __create_preview_for_pdf_file(local_file_save_path, filename):
     logging.info("Preview %s is succesfully stored in local file storage", local_file_preview_save_path)
 
     return local_file_preview_save_path
+
 
 
 def __upload_preview_file_to_azure_storage(
@@ -348,7 +416,7 @@ def handle_document_upload(request: Request) -> Response:
                 # Generating preview for file
                 preview_response = False
                 try:
-                    if ".pdf" in filename:
+                    if "pdf" in filename:
                         preivew_file_local_save_path = __create_preview_for_pdf_file(local_file_save_path, filename)
                         preview_blob_path = os.path.join(
                             blob_folder_name,

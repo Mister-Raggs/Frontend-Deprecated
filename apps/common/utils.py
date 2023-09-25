@@ -1,8 +1,8 @@
 import hashlib
 import logging
 import os
-
 import magic
+
 from apps.common import config_reader
 from apps.common.custom_exceptions import MissingDocumentTypeException, MissingConfigException
 from azure.storage.blob import BlobServiceClient, ContainerClient

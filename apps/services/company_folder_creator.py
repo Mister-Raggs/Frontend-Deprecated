@@ -1,7 +1,7 @@
-from apps.common import utils, constants
 from azure.storage.blob import ContainerClient
 import logging
 
+from apps.common import utils, constants
 
 def create_company_folder_structure(pk: str):
     container_client = utils.get_azure_storage_blob_container_client(constants.DEFAULT_BLOB_CONTAINER)
