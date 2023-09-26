@@ -89,11 +89,11 @@ def handle_document_download(document_id):
             # logging.error("blob  not found in azure storage but it's instance is in DB  with document_id: %s",document_id)
             msg=f"blob  not found in azure storage but it's instance is in DB  with document_id: {document_id}"
             raise MissingBlobException(msg)
-
+            
 
 def __create_preview_for_image_file(local_file_save_path, filename):
+    # Adding suffix 'preview-' to the file name
     local_file_preview_save_path = local_file_save_path.replace(filename, "preview-{}".format(filename))
-    # Define the preview size
     preview_size = (400, 400)
     img = Image.open(local_file_save_path)
     img.thumbnail(preview_size)
@@ -103,39 +103,31 @@ def __create_preview_for_image_file(local_file_save_path, filename):
 
 
 def __create_preview_for_pdf_file(local_file_save_path, filename):
+    # Adding suffix 'preview-' to the file name
     local_file_preview_save_path = local_file_save_path.replace(
         filename, "preview-{}".format(filename.replace("pdf", "png"))
     )
     preview_size = (400, 400)
-
-    # Open the PDF file
     doc = fitz.open(local_file_save_path)
-    # Get the dimensions of the first page
     rect = doc[0].rect
-    # Check the number of pages in the PDF
+    
     if len(doc) == 1:
         # If there is only one page, create a new PDF with the same width and height as the original page
         new_page_rect = fitz.Rect(0, 0, rect.width, rect.height)
-
         pdf_writer = fitz.open()
         new_page = pdf_writer.new_page(width=new_page_rect.width, height=new_page_rect.height)
-
         # Insert the first page into the new page
         new_page.show_pdf_page(fitz.Rect(0, 0, rect.width, rect.height), doc, 0)
 
     elif len(doc) > 1:
         # If there are multiple pages, create a new PDF with double the width to accommodate both pages
         new_page_rect = fitz.Rect(0, 0, rect.width * 2, rect.height)
-
-        # Create a new PDF page with the calculated dimensions
+        # Creating a new PDF page with the calculated dimensions
         pdf_writer = fitz.open()
         new_page = pdf_writer.new_page(width=new_page_rect.width, height=new_page_rect.height)
-
-        # Insert the first page into the new page
+        # Inserting the first page into the "new_page"
         new_page.show_pdf_page(fitz.Rect(0, 0, rect.width, rect.height), doc, 0)
-
-        # If there is more than one page, insert the second page into the new page
-
+        # Inserting the second page into the "new_page"
         new_page.show_pdf_page(fitz.Rect(rect.width, 0, rect.width * 2, rect.height), doc, 1)
 
     pix = new_page.get_pixmap()
@@ -413,8 +405,9 @@ def handle_document_upload(request: Request) -> Response:
                 if response:
                     return response
 
-                # Generating preview for file
-                preview_response = False
+                # ------------------------------------------------------
+                #step 6 Generating preview for file
+                preview_generated :bool = False
                 try:
                     if "pdf" in filename:
                         preivew_file_local_save_path = __create_preview_for_pdf_file(local_file_save_path, filename)
@@ -423,7 +416,7 @@ def handle_document_upload(request: Request) -> Response:
                             constants.PREVIEW_FILES_FOLDER,
                             "preview-{}".format(filename.replace("pdf", "png")),
                         )
-                        preview_response = __upload_preview_file_to_azure_storage(
+                        preview_generated = __upload_preview_file_to_azure_storage(
                             preview_blob_path, preivew_file_local_save_path, blob_service_client
                         )
 
@@ -432,20 +425,20 @@ def handle_document_upload(request: Request) -> Response:
                         preview_blob_path = os.path.join(
                             blob_folder_name, constants.PREVIEW_FILES_FOLDER, "preview-{}".format(filename)
                         )
-                        preview_response = __upload_preview_file_to_azure_storage(
+                        preview_generated = __upload_preview_file_to_azure_storage(
                             preview_blob_path, preivew_file_local_save_path, blob_service_client
                         )
 
-                except:
-                    logging.error("An error occured while generating preview")
+                except Exception as err:
+                    logging.error("An error occured while generating preview : %s ",err)
 
                 # ------------------------------------------------------
-                # Step 6 - check the MD5 has of the uploaded blob. Calculate MD5 of local file and match that to what we get in blob properties.
+                # Step 7 - check the MD5 has of the uploaded blob. Calculate MD5 of local file and match that to what we get in blob properties.
                 if __check_if_md5_hash_match(blob_client, local_file_save_path, filename):
                     logging.info("File '%s' successfully uploaded to azure blob storage.", blob_path)
 
                     # ------------------------------------------------------
-                    # Step 7 - save the blob info to mongodb
+                    # Step 8 - save the blob info to mongodb
                     response = __save_input_blob_to_db_and_cleanup_local_storage(
                         blob_client, local_file_save_path, form_recognizer_model_type, blob_path
                     )
@@ -461,8 +454,8 @@ def handle_document_upload(request: Request) -> Response:
                     return make_response("File Blob MD5 hashes dont match.", HTTPStatus.INTERNAL_SERVER_ERROR)
 
                 # ----------------------------------------------------------
-                # preview save_input_blob_to_db_and_cleanup_local_storage
-                if preview_response:
+                # step 9 - preview save_input_blob_to_db_and_cleanup_local_storage
+                if preview_generated:
                     input_blob: InputBlob = InputBlob.objects(incoming_blob_path=blob_path).first()
                     input_blob.preview_blob_path = preview_blob_path
                     input_blob.save()
@@ -680,9 +673,9 @@ def prepare_list_underlying_data(draw, search_value, start_index, page_length):
 # Function for showing preview of blobs.
 def handle_document_preview(document_id):
     document = InputBlob.objects(pk=document_id).first()
-    if document:
+    blob_path = document.preview_blob_path
+    if blob_path:
         try:
-            blob_path = document.preview_blob_path
             blob_path = blob_path.replace("\\", "/")
             blob_service_client = utils.get_azure_storage_blob_service_client()
             blob_client = blob_service_client.get_blob_client(
@@ -690,8 +683,8 @@ def handle_document_preview(document_id):
             )
             stream = blob_client.download_blob()
             return Response(stream.readall(), mimetype="image/png")
-
         except Exception as e:
-            return jsonify({"status": "error", "message": f"Error fetching document: {str(e)}"}), 500
-
-    return jsonify({"status": "error", "message": "Document not found"}), 404
+            logging.exception(f"error occured in returning the respnse : {e} ")
+    else:
+        return jsonify({"status": "error", "message": "Document not found"}), 404
+    

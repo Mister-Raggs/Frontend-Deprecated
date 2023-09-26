@@ -29,7 +29,7 @@ def api_download_document():
         if response_data:  
             return make_response(response_data,200)
         else:
-            make_response("download not available.",400)
+            return make_response("download not available.",400)
     except Exception as e:        
         logging.exception("error : %s ",e)
         return str(e), 404

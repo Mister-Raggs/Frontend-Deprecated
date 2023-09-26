@@ -39,7 +39,7 @@ $(function () {
         window.open('/citadel/api/document_preview?document_id=' + row_id, '_blank')
 
     }
-    function handleDownloadButtonClick(rowId, action, documentName) {
+    function handle_Download_Button_Click(rowId, action, documentName) {
         console.log("Download triggered for document id: " + rowId);
     
         // Send a POST request to the server to initiate the download
@@ -216,7 +216,7 @@ $(function () {
         var rowId = get_dt_row_id($(this), $dtable);
         var documentName = get_document_name($(this), $dtable);
         var action = 'download'; // Assuming the action is 'download', adjust as necessary
-        handleDownloadButtonClick(rowId, action, documentName);
+        handle_Download_Button_Click(rowId, action, documentName);
     });
 
     // enable tooltips on action buttons
