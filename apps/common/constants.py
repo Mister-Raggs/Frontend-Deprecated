@@ -8,7 +8,7 @@ DEFAULT_LOCAL_FILE_UPLOAD_STORAGE_FOLDER = "../../local-blob-storage"
 COMPANY_ROOT_FOLDER_PREFIX = "Company-"
 VALIDATION_SUCCESSFUL_SUBFOLDER = "/Validation-Successful"
 MONGODB_CONN_ALIAS = "citadel_frontend_app"
-DEFAULT_BLOB_CONTAINER = "aarkglobal"
+DEFAULT_BLOB_CONTAINER = "fileintake"
 INCOMING_FILES_FOLDER = "Incoming-Files"
 PREVIEW_FILES_FOLDER = "Preview"
 
