@@ -60,7 +60,7 @@ def check_validate_and_move_blob():
                     input_blob.incoming_blob_path, input_blob.validation_failed_blob_path, blob_service_client
                 )
                 processing_lifecycle_status = LifecycleStatus(
-                    status=LifecycleStatusTypes.INITIAL_VALIDATED,
+                    status=LifecycleStatusTypes.INITIAL_FAILED,
                     message="File failed to validate",
                     updated_date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
